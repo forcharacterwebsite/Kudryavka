@@ -33,7 +33,7 @@
   <div class="gate__box">
     <p class="gate__kicker mono">Photosensitivity &amp; audio warning</p>
     <h2 class="gate__title" id="gateTitle">광과민성 발작 주의</h2>
-    <p class="gate__text" id="gateText">이 페이지에는 깜빡이는 빛, 화면 전체가 반전되는 효과(발현 능력 시뮬레이터)와 빠르게 움직이는 그래픽이 포함되어 있습니다. 광과민성 뇌전증이 있거나 빛과 움직임에 민감하다면 주의해 주세요. 보는 도중 어지럽거나 불편하면 바로 창을 닫아 주세요.</p>
+    <p class="gate__text" id="gateText">이 페이지에는 깜빡이는 빛, 화면 전체가 반전되는 효과(발현 능력 시뮬레이터), 화면이 흔들리고 빛 파편이 튀는 효과(특수능력 시뮬레이터)와 빠르게 움직이는 그래픽이 포함되어 있습니다. 광과민성 뇌전증이 있거나 빛과 움직임에 민감하다면 주의해 주세요. 보는 도중 어지럽거나 불편하면 바로 창을 닫아 주세요.</p>
     <div class="gate__sound">
       <p class="gate__sub mono">Audio &mdash; transmitting</p>
       <p class="gate__text" id="gateSoundText">이 페이지에는 배경 음악과 효과음이 나옵니다. 들어가기 전에 기기의 소리를 줄여 주세요. 소리 없이 보고 싶다면 &lsquo;소리 끄고 보기&rsquo;를 누르세요. 들어간 뒤에도 오른쪽 위 SOUND 버튼으로 언제든 켜고 끌 수 있습니다.</p>
@@ -93,6 +93,7 @@
     <li><a href="#s09" data-label="Traits"><i></i></a></li>
     <li><a href="#s10" data-label="Inventory"><i></i></a></li>
     <li><a href="#s11" data-label="Link"><i></i></a></li>
+    <li><a href="#s12" data-label="Coupling"><i></i></a></li>
     <li><a href="#oath" data-label="Last log"><i></i></a></li>
   </ol>
 </nav>
@@ -178,7 +179,7 @@
 <!-- ============ 01 IDENTITY ============ -->
 <section class="stage" id="s01" data-stage="1">
   <header class="stage__head rv">
-    <p class="stage__no mono">01 <span>/ 11</span></p>
+    <p class="stage__no mono">01 <span>/ 12</span></p>
     <h2 class="stage__title">신원 정보</h2>
     <p class="stage__en">Identity</p>
   </header>
@@ -215,7 +216,7 @@
 <!-- ============ 02 APPEARANCE ============ -->
 <section class="stage" id="s02" data-stage="2">
   <header class="stage__head rv">
-    <p class="stage__no mono">02 <span>/ 11</span></p>
+    <p class="stage__no mono">02 <span>/ 12</span></p>
     <h2 class="stage__title">외관</h2>
     <p class="stage__en">Appearance</p>
   </header>
@@ -234,7 +235,7 @@
 <!-- ============ 03 PERSONALITY ============ -->
 <section class="stage" id="s03" data-stage="3">
   <header class="stage__head rv">
-    <p class="stage__no mono">03 <span>/ 11</span></p>
+    <p class="stage__no mono">03 <span>/ 12</span></p>
     <h2 class="stage__title">성격</h2>
     <p class="stage__en">Personality</p>
   </header>
@@ -249,7 +250,7 @@
 <!-- ============ 04 LHS ============ -->
 <section class="stage" id="s04" data-stage="4">
   <header class="stage__head rv">
-    <p class="stage__no mono">04 <span>/ 11</span></p>
+    <p class="stage__no mono">04 <span>/ 12</span></p>
     <h2 class="stage__title">L / H / S</h2>
     <p class="stage__en">Like &middot; Hate &middot; Scare</p>
   </header>
@@ -263,7 +264,7 @@
 <!-- ============ 05 STATS ============ -->
 <section class="stage" id="s05" data-stage="5">
   <header class="stage__head rv">
-    <p class="stage__no mono">05 <span>/ 11</span></p>
+    <p class="stage__no mono">05 <span>/ 12</span></p>
     <h2 class="stage__title">능력치</h2>
     <p class="stage__en">Telemetry</p>
   </header>
@@ -290,7 +291,7 @@
 <!-- ============ 06 SKILLS ============ -->
 <section class="stage" id="s06" data-stage="6">
   <header class="stage__head rv">
-    <p class="stage__no mono">06 <span>/ 11</span></p>
+    <p class="stage__no mono">06 <span>/ 12</span></p>
     <h2 class="stage__title">기술</h2>
     <p class="stage__en">Maneuvers</p>
   </header>
@@ -303,9 +304,9 @@
 </section>
 
 <!-- ============ 07 SPECIAL ============ -->
-<section class="stage" id="s07" data-stage="7">
+<section class="stage stage--special" id="s07" data-stage="7">
   <header class="stage__head rv">
-    <p class="stage__no mono">07 <span>/ 11</span></p>
+    <p class="stage__no mono">07 <span>/ 12</span></p>
     <h2 class="stage__title">특수능력</h2>
     <p class="stage__en">Special</p>
   </header>
@@ -313,38 +314,40 @@
   <h3 class="special__title rv">별들의 사슬</h3>
   <p class="prose rv">적들을 별자리처럼 보이지 않는 빛의 사슬로 연결한다. 한 번 엮인 별자리는 고통과 충격을 고스란히 공유하며, 연결이 길어질수록 사용자의 정신력을 극도로 요하게 된다.</p>
 
-  <div class="chainwrap">
-    <ol class="rules rv">
-      <li><p class="mono">07.1 &mdash; Link</p><p>최초 대상 1명을 지정한 후, 별자리처럼 최대 7명의 적까지 차례대로 사슬을 연결한다.</p></li>
-      <li><p class="mono">07.2 &mdash; Check</p><p>대상을 1명 추가로 연결할 때마다 정신력 판정을 실시하며, 실패하기 전까지 연결된 모든 대상에게 사슬이 유지된다.</p><p class="rules__sub">(7번째 대상까지 판정 성공 시 계속 연결, 판정 실패 시 그 직전까지 연결된 적들에게만 사슬 적용)</p></li>
-      <li><p class="mono">07.3 &mdash; Shatter</p><p>사슬이 연결된 상태에서 쿠드랴프카가 다음 턴에 가하는 공격이 적중할 경우, 사슬이 연쇄작용을 일으키며 부서지고, 사슬로 이어진 모든 적이 동일한 최종 피해량을 함께 받는다.</p></li>
-    </ol>
-
-    <div class="chain rv" id="chain">
-      <div class="chain__map">
-        <svg id="chainSvg" viewBox="0 0 400 300" role="img" aria-label="적이 별처럼 흩어진 지도. 적을 눌러 사슬을 연결하세요.">
-          <g id="chainLinks"></g><g id="chainStars"></g>
-        </svg>
-        <p class="chain__hint mono" id="chainHint">최초 대상을 고르세요</p>
-      </div>
-      <dl class="chain__hud mono">
-        <div><dt>Linked</dt><dd><b id="cN">0</b> / 7</dd></div>
-        <div><dt>Last check</dt><dd><b id="cCheck">&mdash;</b></dd></div>
-        <div><dt>Status</dt><dd><b id="cStatus">READY</b></dd></div>
-      </dl>
+  <div class="chain rv" id="chain">
+    <dl class="chain__hud mono">
+      <div><dt>Linked</dt><dd><b id="cN">0</b> / 7</dd></div>
+      <div><dt>Next check</dt><dd><b id="cNext">&mdash;</b></dd></div>
+      <div><dt>Last check</dt><dd><b id="cCheck">&mdash;</b></dd></div>
+      <div><dt>Status</dt><dd><b id="cStatus">READY</b></dd></div>
+    </dl>
+    <div class="chain__load" aria-hidden="true"><span class="mono">Mind load</span><i id="cLoad"></i></div>
+    <div class="chain__stage" id="chainStage">
+      <canvas id="chainCanvas" aria-hidden="true"></canvas>
+      <div class="chain__targets" id="chainTargets" aria-label="적 목록. 눌러서 사슬을 연결하세요."></div>
+      <p class="chain__hint mono" id="chainHint">최초 대상을 고르세요</p>
+      <p class="chain__banner" id="chainBanner" aria-live="polite"></p>
+    </div>
+    <div class="chain__bar">
+      <p class="chain__note mono">// 판정 성공률은 시연용 임의값입니다 (두 번째 대상 90%, 이후 한 명마다 10%p씩 낮아짐). 실제 판정은 정신력 판정을 따릅니다.</p>
       <div class="chain__ctrl mono">
-        <button type="button" id="cStrike" disabled>다음 턴 공격 적중 &rarr; 연쇄</button>
+        <button type="button" id="cStrike" class="chain__strike" disabled>다음 턴 공격 적중 &rarr; 연쇄</button>
         <button type="button" id="cReset">초기화</button>
       </div>
-      <p class="chain__note mono">// 판정 성공률은 시연용 임의값입니다 (두 번째 대상 90%, 이후 한 명마다 10%p씩 낮아짐). 실제 판정은 정신력 판정을 따릅니다.</p>
     </div>
   </div>
+
+  <ol class="rules rules--row">
+    <li class="rv"><p class="mono">07.1 &mdash; Link</p><p>최초 대상 1명을 지정한 후, 별자리처럼 최대 7명의 적까지 차례대로 사슬을 연결한다.</p></li>
+    <li class="rv"><p class="mono">07.2 &mdash; Check</p><p>대상을 1명 추가로 연결할 때마다 정신력 판정을 실시하며, 실패하기 전까지 연결된 모든 대상에게 사슬이 유지된다.</p><p class="rules__sub">(7번째 대상까지 판정 성공 시 계속 연결, 판정 실패 시 그 직전까지 연결된 적들에게만 사슬 적용)</p></li>
+    <li class="rv"><p class="mono">07.3 &mdash; Shatter</p><p>사슬이 연결된 상태에서 쿠드랴프카가 다음 턴에 가하는 공격이 적중할 경우, 사슬이 연쇄작용을 일으키며 부서지고, 사슬로 이어진 모든 적이 동일한 최종 피해량을 함께 받는다.</p></li>
+  </ol>
 </section>
 
 <!-- ============ 08 TALENT ============ -->
 <section class="stage stage--talent" id="s08" data-stage="8">
   <header class="stage__head rv">
-    <p class="stage__no mono">08 <span>/ 11</span></p>
+    <p class="stage__no mono">08 <span>/ 12</span></p>
     <h2 class="stage__title">발현 능력</h2>
     <p class="stage__en">Talent</p>
   </header>
@@ -393,7 +396,7 @@
 <!-- ============ 09 TRAITS ============ -->
 <section class="stage" id="s09" data-stage="9">
   <header class="stage__head rv">
-    <p class="stage__no mono">09 <span>/ 11</span></p>
+    <p class="stage__no mono">09 <span>/ 12</span></p>
     <h2 class="stage__title">특징</h2>
     <p class="stage__en">Traits</p>
   </header>
@@ -413,7 +416,7 @@
 <!-- ============ 10 INVENTORY ============ -->
 <section class="stage" id="s10" data-stage="10">
   <header class="stage__head rv">
-    <p class="stage__no mono">10 <span>/ 11</span></p>
+    <p class="stage__no mono">10 <span>/ 12</span></p>
     <h2 class="stage__title">소지품</h2>
     <p class="stage__en">Cargo</p>
   </header>
@@ -427,7 +430,7 @@
 <!-- ============ 11 LINK ============ -->
 <section class="stage" id="s11" data-stage="11">
   <header class="stage__head rv">
-    <p class="stage__no mono">11 <span>/ 11</span></p>
+    <p class="stage__no mono">11 <span>/ 12</span></p>
     <h2 class="stage__title">선관</h2>
     <p class="stage__en">Link</p>
   </header>
@@ -446,23 +449,51 @@
       </ul>
       <p class="link__quote">&ldquo;드미트리, 그래도 점호는 참석하는 것이 바람직하지 않겠습니까?&rdquo;</p>
       <dl class="link__meta mono">
-        <div><dt>11.2 &mdash; 지향 커플링</dt><dd>ALL &lt;&lt;&lt; CL</dd></div>
-        <div><dt>11.3 &mdash; Note</dt><dd>갠밴은 열린문~~~~~</dd></div>
+        <div><dt>11.2 &mdash; Note</dt><dd>갠밴은 열린문~~~~~</dd></div>
       </dl>
     </div>
     <div class="link__body payload__item rv">
-      <p class="panel__no mono">11.4 &mdash; Relation log</p>
+      <p class="panel__no mono">11.3 &mdash; Relation log</p>
       <p class="link__desc">1년 전쯤 각자 다른 일을 하다 우연히 만나 인연을 트게 된 사이. 흥미주의인 드미트리와 원칙주의인 쿠드랴프카는 어찌 보면 겹치지 않는 평행선처럼 너무나도 달라 잘 맞지 않을 듯하나&hellip; 의외로 남을 잘 챙기는 쿠드랴프카와 흥미만 끈다면 본격적인 드미트리의 성격이 얼추 들어맞아, 쿠드랴프카는 귀찮다며 움직이지 않는 드미트리를 들고 점호에 참석하고, 드미트리는 쿠드랴프카가 부족한 부분들을 도와주는 등 가까이 지내고 있다고 한다.</p>
     </div>
   </div>
 </section>
 
+<!-- ============ 12 COUPLING ============ -->
+<section class="stage" id="s12" data-stage="12">
+  <header class="stage__head rv">
+    <p class="stage__no mono">12 <span>/ 12</span></p>
+    <h2 class="stage__title">지향 커플링</h2>
+    <p class="stage__en">Coupling</p>
+  </header>
+  <div class="coupling rv">
+    <p class="panel__no mono">12.1 &mdash; Preferred coupling</p>
+    <p class="coupling__v">ALL <span>&lt;&lt;&lt;</span> CL</p>
+  </div>
+</section>
+
 <!-- ============ OATH ============ -->
-<section class="oath stage" id="oath" data-stage="12" aria-label="입단 각오">
+<section class="oath stage" id="oath" data-stage="13" aria-label="입단 각오">
   <p class="oath__label mono"><i></i>Last log &mdash; 입단 각오</p>
   <p class="oath__text">[ 실망 시켜드리는 일이 없도록 임하겠습니다. ]</p>
   <p class="oath__remark">&ldquo;잘 부탁드립니다! 거북이지만 열심히 달려보겠습니다!&rdquo;</p>
 </section>
+
+<!-- ============ 이면 세계 혼잣말: 이 부분을 수정해주세요 ============
+     발현 능력을 11회 이상 쓰면 화면에 떠오르는 혼잣말입니다.
+     <li> 한 줄이 문장 하나입니다. 줄을 고치거나, 더하거나, 지우면 그대로 반영됩니다.
+     ============================================================ -->
+<ul id="murmurLines" hidden>
+  <li>…잠시.</li>
+  <li>신중한 판단을.</li>
+  <li>시간을 부탁드리겠습니다.</li>
+  <li>별의 잔해로 태어나…</li>
+  <li>다시 별이 될 날을…</li>
+  <li>기다린다.</li>
+  <li>실망 시켜드리는 일이 없도록.</li>
+  <li>…잠시만.</li>
+</ul>
+<!-- ============ 혼잣말 수정 끝 ============ -->
 
 <!-- ============ END ============ -->
 <footer class="end">
