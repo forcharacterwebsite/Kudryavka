@@ -229,7 +229,6 @@
     cx.fillStyle = gl; cx.beginPath(); cx.arc(-.35 * k, -.4 * k, k * 2.4, 0, TAU); cx.fill();
     cx.restore();
     /* while it is in view and sound is on: alternating beeps, about three a second */
-    if (x > 0 && x < W && now - lastBeep > 330) { lastBeep = now; beepAlt = !beepAlt; sputnikBeep(beepAlt); }
     if (x < -120 * DPR || x > W + 120 * DPR) { ship = null; nextShip = now + 14000 + Math.random() * 10000; }
   }
 
@@ -251,6 +250,7 @@
     { sec: "#s09", name: "Crux", side: .88, k: 48, pts: [[.5,0],[.5,1.6],[0,.7],[1.1,.6]], e: [[0,1],[2,3]] },
     { sec: "#s10", name: "Corona Borealis", side: .86, k: 34, pts: [[0,0],[.5,.5],[1.2,.75],[2,.7],[2.6,.4],[3,0]], e: [[0,1],[1,2],[2,3],[3,4],[4,5]] },
     { sec: "#s11", name: "Gemini", side: .86, k: 34, pts: [[0,0],[1,-.1],[.1,1],[1.1,.9],[.2,2],[1.2,1.9],[.3,2.9],[1.3,2.8]], e: [[0,2],[2,4],[4,6],[1,3],[3,5],[5,7],[2,3]] },
+    { sec: "#s12", name: "Andromeda", side: .86, k: 34, pts: [[0,0],[.9,.25],[1.8,.4],[2.8,.45],[1.7,-.4],[2.5,-.9]], e: [[0,1],[1,2],[2,3],[1,4],[4,5]] },
     { sec: "#oath", name: "Polaris", side: .82, k: 50, pts: [[0,0]], e: [] }
   ].map(c => ({ ...c, el: $(c.sec) }));
   function drawLines() {
@@ -628,7 +628,9 @@
   }
 
   /* 혼잣말: 원문에 트라우마 설정이 없어 쿠드랴프카 본인의 대사 조각만 쓴다. 설정이 생기면 이 줄만 바꾸면 된다 */
-  const MURMUR = ["…잠시.", "신중한 판단을.", "시간을 부탁드리겠습니다.", "별의 잔해로 태어나…", "다시 별이 될 날을…", "기다린다.", "실망 시켜드리는 일이 없도록.", "…잠시만."];
+  /* 혼잣말은 index.html 의 <ul id="murmurLines"> 에서 읽는다 (그곳에서 수정) */
+  const MURMUR = $$("#murmurLines li").map(li => li.textContent.trim()).filter(Boolean);
+  if (!MURMUR.length) MURMUR.push("…");
   const other = $("#otherside");
   let otherTimer = 0;
   function showOtherside() {
@@ -716,74 +718,261 @@
   applyStrain();
 
   /* =========================================================
-     SPECIAL — 별들의 사슬 (chain simulator)
-     1) 최초 대상은 판정 없이 연결  2) 추가 연결마다 정신력 판정, 실패 시 직전까지 고정
+     SPECIAL — 별들의 사슬 (canvas chain simulator)
+     1) 최초 대상은 판정 없이 연결  2) 추가 연결마다 정신력 판정, 실패 시 직전까지 고정 (최대 7명)
      3) 다음 턴 공격 적중 → 사슬이 연쇄로 부서지며 연결된 모두가 같은 피해
      판정 성공률은 시연용 임의값(두 번째 90%, 이후 10%p씩 감소)
      ========================================================= */
-  const chainSvg = $("#chainSvg");
-  if (chainSvg) {
-    const ENEMY = [[62,58],[148,40],[236,72],[330,48],[96,150],[190,128],[290,150],[350,212],[60,236],[160,226],[250,250]];
-    const linksG = $("#chainLinks"), starsG = $("#chainStars");
-    const nEl = $("#cN"), chkEl = $("#cCheck"), stEl = $("#cStatus"), chHint = $("#chainHint");
+  const chainStage = $("#chainStage");
+  if (chainStage) {
+    const cv = $("#chainCanvas"), g = cv.getContext("2d");
+    const tWrap = $("#chainTargets"), chain = $("#chain");
+    const nEl = $("#cN"), nextEl = $("#cNext"), chkEl = $("#cCheck"), stEl = $("#cStatus"), loadEl = $("#cLoad");
+    const chHint = $("#chainHint"), banner = $("#chainBanner");
     const strikeBtn = $("#cStrike"), resetBtnC = $("#cReset");
-    let linked = [], locked = false, struck = false;
-    const stars = ENEMY.map(([x, y], i) => {
-      const g = mk("g", { tabindex: 0, role: "button", "aria-label": "적 " + (i + 1) + " 연결" }, starsG);
-      mk("circle", { cx: x, cy: y, r: 16, class: "halo" }, g);
-      mk("circle", { cx: x, cy: y, r: 9, class: "ring" }, g);
-      mk("circle", { cx: x, cy: y, r: 3.2, class: "core" }, g);
-      const t = mk("text", { x: x, y: y + 22, "text-anchor": "middle" }, g); t.textContent = "E" + (i + 1);
-      g.addEventListener("click", () => pick(i));
-      g.addEventListener("keydown", e => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); pick(i); } });
-      return g;
+    const GOLD = "246,207,124", WHITE = "245,245,247";
+    const POS_WIDE = [[.10,.28],[.24,.14],[.35,.38],[.49,.18],[.62,.42],[.76,.16],[.89,.33],[.17,.68],[.40,.74],[.64,.76],[.85,.70]];
+    const POS_TALL = [[.18,.12],[.52,.08],[.84,.16],[.32,.28],[.72,.33],[.14,.45],[.50,.48],[.86,.53],[.26,.65],[.62,.70],[.84,.78]];
+    let W = 0, H = 0, CDPR = 1, POS = POS_WIDE;
+    const enemies = POS_WIDE.map((_, i) => ({ i, state: "idle", flash: -1e9, pulse: -1e9 }));
+    let linked = [], links = [], fails = [], parts = [], texts = [], locked = false, struck = false, busy = false, strikeT0 = 0;
+    const dust = Array.from({ length: 140 }, () => ({ x: Math.random(), y: Math.random(), r: Math.random() * 1.1 + .2, a: Math.random() * .5 + .1, k: Math.random() * TAU }));
+
+    /* targets as real buttons (click + keyboard) */
+    const btns = enemies.map(e => {
+      const b = document.createElement("button");
+      b.type = "button"; b.className = "chain__t"; b.setAttribute("aria-label", "적 E" + (e.i + 1) + " 연결");
+      b.addEventListener("click", ev => { ev.stopPropagation(); pick(e.i); });
+      tWrap.appendChild(b); return b;
     });
-    const line = (a, b, cls) => mk("line", { x1: ENEMY[a][0], y1: ENEMY[a][1], x2: ENEMY[b][0], y2: ENEMY[b][1], class: cls || "" }, linksG);
+    function layout() {
+      const r = chainStage.getBoundingClientRect();
+      CDPR = Math.min(2, window.devicePixelRatio || 1);
+      W = r.width; H = r.height; cv.width = Math.round(W * CDPR); cv.height = Math.round(H * CDPR);
+      POS = W / H < 1.1 ? POS_TALL : POS_WIDE;
+      btns.forEach((b, i) => { b.style.left = POS[i][0] * 100 + "%"; b.style.top = POS[i][1] * 100 + "%"; });
+    }
+    new ResizeObserver(layout).observe(chainStage); layout();
+    const P = i => ({ x: POS[i][0] * W, y: POS[i][1] * H });
+    const lerp = (a, b, t) => a + (b - a) * t, easeOut = t => 1 - Math.pow(1 - t, 3);
+
+    /* particles */
+    function burst(x, y, n, opt = {}) {
+      if (reduce) n = Math.min(n, 6);
+      for (let k = 0; k < n; k++) {
+        const a = opt.dir != null ? opt.dir + (Math.random() - .5) * (opt.spread || 1) : Math.random() * TAU;
+        const sp = (opt.speed || 160) * (.35 + Math.random() * .9);
+        parts.push({ x, y, vx: Math.cos(a) * sp, vy: Math.sin(a) * sp, life: 0, max: (opt.life || .7) * (.6 + Math.random() * .7),
+          r: (opt.size || 1.8) * (.5 + Math.random()), col: opt.col || GOLD, g: opt.g == null ? 260 : opt.g, shard: !!opt.shard, rot: Math.random() * TAU, vr: (Math.random() - .5) * 14 });
+      }
+    }
+    function shards(a, b, col, n) {   // a line breaking into falling pieces
+      if (reduce) n = Math.min(n, 5);
+      const nx = -(b.y - a.y), ny = b.x - a.x, len = Math.hypot(nx, ny) || 1;
+      for (let k = 0; k < n; k++) {
+        const t = Math.random(), x = lerp(a.x, b.x, t), y = lerp(a.y, b.y, t), side = Math.random() < .5 ? -1 : 1;
+        const sp = 60 + Math.random() * 160;
+        parts.push({ x, y, vx: nx / len * sp * side + (Math.random() - .5) * 60, vy: ny / len * sp * side - 40 - Math.random() * 80,
+          life: 0, max: .9 + Math.random() * .7, r: 2 + Math.random() * 4, col, g: 420, shard: true, rot: Math.random() * TAU, vr: (Math.random() - .5) * 18 });
+      }
+    }
+    const say = (x, y, text, col, big) => texts.push({ x, y, text, col: col || GOLD, t0: performance.now(), big: !!big });
+    function shake(hard) {
+      if (reduce) return;
+      chain.classList.remove("is-shake"); void chain.offsetWidth; chain.classList.add("is-shake");
+      if (hard) { document.body.classList.remove("is-quake"); void document.body.offsetWidth; document.body.classList.add("is-quake"); }
+      setTimeout(() => { chain.classList.remove("is-shake"); document.body.classList.remove("is-quake"); }, 460);
+    }
+    const chanceFor = n => Math.max(.1, .9 - .1 * (n - 1));   // n = how many are already linked
+
     function paint() {
       nEl.textContent = linked.length;
-      strikeBtn.disabled = struck || linked.length < 2;
-      stars.forEach((g, i) => { g.classList.toggle("is-on", linked.includes(i)); g.classList.toggle("is-locked", locked || struck || linked.includes(i)); });
+      const canLink = !locked && !struck && linked.length > 0 && linked.length < 7;
+      nextEl.textContent = !linked.length ? "최초 · 판정 없음" : canLink ? Math.round(chanceFor(linked.length) * 100) + "%" : "—";
+      loadEl.style.width = (linked.length / 7 * 100) + "%";
+      strikeBtn.disabled = struck || busy || linked.length < 2;
+      resetBtnC.disabled = busy;
+      btns.forEach((b, i) => { b.disabled = struck || locked || linked.includes(i); });
     }
+    function setBanner(html) { banner.innerHTML = html || ""; banner.classList.toggle("is-on", !!html); }
+
     function pick(i) {
+      if (busy) return;
       if (struck) { chHint.textContent = "사슬이 이미 부서졌습니다 — 초기화를 누르세요"; return; }
       if (locked) { chHint.textContent = linked.length >= 7 ? "최대 7명까지 연결했습니다" : "판정 실패 — 더 이상 연결할 수 없습니다"; return; }
       if (linked.includes(i)) return;
+      const now = performance.now(), p = P(i);
       if (!linked.length) {
-        linked.push(i); chkEl.textContent = "—"; stEl.textContent = "LINKING";
-        chHint.textContent = "최초 대상 지정 — 다음 적을 눌러 사슬을 이어 가세요"; chime(0); paint(); return;
+        linked.push(i); enemies[i].state = "linked"; enemies[i].pulse = now;
+        burst(p.x, p.y, 26, { speed: 140 }); say(p.x, p.y - 30, "TARGET");
+        chkEl.textContent = "—"; chkEl.className = ""; stEl.textContent = "LINKING";
+        chHint.textContent = "최초 대상 지정 — 다음 적을 눌러 사슬을 뻗으세요"; chime(0); paint(); return;
       }
-      const p = Math.max(.1, .9 - .1 * (linked.length - 1));
-      const prev = linked[linked.length - 1];
-      if (Math.random() < p) {
-        line(prev, i); linked.push(i); chime(linked.length);
-        chkEl.textContent = "성공 (" + Math.round(p * 100) + "%)";
-        if (linked.length >= 7) { locked = true; stEl.textContent = "MAX 7"; chHint.textContent = "7명 연결 완료 — 다음 턴 공격으로 연쇄시키세요"; }
-        else { stEl.textContent = "LINKING"; chHint.textContent = linked.length + "명 연결 — 계속 잇거나 공격하세요"; }
+      const chance = chanceFor(linked.length), prev = linked[linked.length - 1], ok = Math.random() < chance;
+      busy = true; paint();
+      if (ok) {
+        links.push({ a: prev, b: i, t0: now, dur: reduce ? 1 : 360, state: "grow" });
+        chkEl.textContent = "성공 · " + Math.round(chance * 100) + "%"; chkEl.className = "is-good";
+        whoosh();
+        setTimeout(() => {
+          const q = P(i), t = performance.now();
+          linked.push(i); enemies[i].state = "linked"; enemies[i].pulse = t;
+          burst(q.x, q.y, 34, { speed: 190 }); say(q.x, q.y - 30, "LINK " + linked.length);
+          chime(linked.length); busy = false;
+          if (linked.length >= 7) { locked = true; stEl.textContent = "MAX 7"; chHint.textContent = "7명 연결 완료 — 다음 턴 공격으로 연쇄시키세요"; }
+          else { stEl.textContent = "LINKING"; chHint.textContent = linked.length + "명 연결 — 계속 잇거나 공격하세요"; }
+          paint();
+        }, reduce ? 0 : 360);
       } else {
-        const f = line(prev, i, "is-fail"); setTimeout(() => f.remove(), 1400);
-        locked = true; chkEl.textContent = "실패 (" + Math.round(p * 100) + "%)"; stEl.textContent = "HOLD " + linked.length;
-        chHint.textContent = "정신력 판정 실패 — 직전까지 연결된 " + linked.length + "명에게만 사슬 유지";
+        fails.push({ a: prev, b: i, t0: now });
+        chkEl.textContent = "실패 · " + Math.round(chance * 100) + "%"; chkEl.className = "is-bad";
+        setTimeout(() => {
+          const A = P(prev), B = P(i), m = { x: lerp(A.x, B.x, .55), y: lerp(A.y, B.y, .55) };
+          shards(A, m, WHITE, 26); burst(m.x, m.y, 18, { col: WHITE, speed: 220 }); say(m.x, m.y - 40, "정신력 판정 실패", WHITE, true);
+          enemies[i].flash = performance.now() - 200; burst(B.x, B.y, 14, { col: "160,160,168", speed: 90, life: .6 });
+          shake(true); thud();
+          locked = true; busy = false; stEl.textContent = "HOLD " + linked.length;
+          chHint.textContent = "판정 실패 — 직전까지 연결된 " + linked.length + "명에게만 사슬 유지";
+          paint();
+        }, reduce ? 0 : 520);
       }
-      paint();
     }
+    chainStage.addEventListener("click", ev => {   // click near a star on the canvas also picks it
+      const r = chainStage.getBoundingClientRect(), x = ev.clientX - r.left, y = ev.clientY - r.top;
+      let best = -1, bd = 44;
+      POS.forEach((_, i) => { const p = P(i), d = Math.hypot(p.x - x, p.y - y); if (d < bd) { bd = d; best = i; } });
+      if (best >= 0) pick(best);
+    });
+
     strikeBtn.addEventListener("click", () => {
       if (strikeBtn.disabled) return;
-      struck = true; stEl.textContent = "SHATTER"; chHint.textContent = "공격 적중 — 사슬이 연쇄적으로 부서집니다";
-      const ls = $$("line:not(.is-fail)", linksG);
+      struck = true; busy = true; strikeT0 = performance.now(); paint();
+      stEl.textContent = "SHATTER"; chHint.textContent = "공격 적중 — 사슬이 연쇄적으로 부서집니다"; setBanner("");
+      const STEP = reduce ? 0 : 230;
+      const first = P(linked[0]);
+      burst(first.x, first.y, 50, { col: WHITE, speed: 320, life: .6 }); shake(false); whoosh();
+      enemies[linked[0]].flash = performance.now(); say(first.x, first.y - 54, "HIT", WHITE, true);
+      links.forEach(l => { l.state = "on"; });
       linked.forEach((idx, k) => setTimeout(() => {
-        if (ls[k - 1]) ls[k - 1].classList.add("is-break");
-        stars[idx].classList.add("is-hit"); chime(k);
-        const [x, y] = ENEMY[idx];
-        const d = mk("text", { x: x, y: y - 14, "text-anchor": "middle", class: "dmg" }, stars[idx]); d.textContent = "동일 피해";
-      }, reduce ? 0 : k * 160));
-      setTimeout(() => { stEl.textContent = "DONE"; chHint.textContent = linked.length + "명 모두 같은 최종 피해를 받았습니다"; }, reduce ? 0 : linked.length * 160 + 400);
-      paint();
+        const t = performance.now(), p = P(idx);
+        if (k > 0) {
+          const l = links[k - 1]; l.state = "break"; l.bt = t;
+          shards(P(l.a), P(l.b), GOLD, 34); crack();
+        }
+        enemies[idx].flash = t; enemies[idx].state = "hit";
+        burst(p.x, p.y, 40, { speed: 260, life: .9 }); chime(k + 1);
+        say(p.x, p.y - 30, "동일 피해", GOLD, false);
+      }, STEP * (k + 1)));
+      setTimeout(() => {
+        const t = performance.now();
+        linked.forEach(idx => { enemies[idx].pulse = t; const p = P(idx); burst(p.x, p.y, 14, { speed: 120, life: .5 }); });
+        setBanner("&times;" + linked.length + " 동일 최종 피해<small>chain shattered</small>");
+        stEl.textContent = "DONE"; chHint.textContent = linked.length + "명 모두 같은 최종 피해를 받았습니다 — 초기화로 다시 해 보세요";
+        busy = false; paint();
+      }, STEP * (linked.length + 1) + 240);
     });
     resetBtnC.addEventListener("click", () => {
-      linked = []; locked = false; struck = false; linksG.innerHTML = "";
-      stars.forEach(g => { g.classList.remove("is-hit"); $$(".dmg", g).forEach(d => d.remove()); });
-      chkEl.textContent = "—"; stEl.textContent = "READY"; chHint.textContent = "최초 대상을 고르세요"; paint();
+      linked = []; links = []; fails = []; parts = []; texts = []; locked = false; struck = false; busy = false;
+      enemies.forEach(e => { e.state = "idle"; e.flash = e.pulse = -1e9; });
+      chkEl.textContent = "—"; chkEl.className = ""; stEl.textContent = "READY"; chHint.textContent = "최초 대상을 고르세요"; setBanner(""); paint();
     });
+
+    /* ---------- drawing ---------- */
+    function glowLine(a, b, alpha, width) {
+      g.lineCap = "round";
+      g.strokeStyle = `rgba(${GOLD},${(alpha * .18).toFixed(3)})`; g.lineWidth = width * 7; g.beginPath(); g.moveTo(a.x, a.y); g.lineTo(b.x, b.y); g.stroke();
+      g.strokeStyle = `rgba(${GOLD},${(alpha * .45).toFixed(3)})`; g.lineWidth = width * 3; g.beginPath(); g.moveTo(a.x, a.y); g.lineTo(b.x, b.y); g.stroke();
+      g.strokeStyle = `rgba(255,248,226,${alpha.toFixed(3)})`; g.lineWidth = width; g.beginPath(); g.moveTo(a.x, a.y); g.lineTo(b.x, b.y); g.stroke();
+    }
+    function star(x, y, r, col, a) {
+      const gr = g.createRadialGradient(x, y, 0, x, y, r);
+      gr.addColorStop(0, `rgba(${col},${a})`); gr.addColorStop(.25, `rgba(${col},${a * .5})`); gr.addColorStop(1, `rgba(${col},0)`);
+      g.fillStyle = gr; g.beginPath(); g.arc(x, y, r, 0, TAU); g.fill();
+    }
+    let last = performance.now(), visible = false;
+    new IntersectionObserver(es => { visible = es[0].isIntersecting; }, { threshold: 0 }).observe(chainStage);
+    function draw(now) {
+      requestAnimationFrame(draw);
+      const dt = Math.min(.05, (now - last) / 1000); last = now;
+      if (!visible || !W) return;
+      g.setTransform(CDPR, 0, 0, CDPR, 0, 0);
+      g.clearRect(0, 0, W, H);
+      /* dust */
+      for (const d of dust) { g.fillStyle = `rgba(233,233,235,${(d.a * (.6 + .4 * Math.sin(now * .001 + d.k))).toFixed(3)})`; g.fillRect(d.x * W, d.y * H, d.r, d.r); }
+      g.globalCompositeOperation = "lighter";
+      /* links */
+      for (const l of links) {
+        const A = P(l.a), B = P(l.b);
+        if (l.state === "grow") {
+          const k = Math.min(1, (now - l.t0) / l.dur), e = easeOut(k), tip = { x: lerp(A.x, B.x, e), y: lerp(A.y, B.y, e) };
+          glowLine(A, tip, 1, 1.6);
+          star(tip.x, tip.y, 26, GOLD, .9);
+          if (!reduce && Math.random() < .9) burst(tip.x, tip.y, 2, { speed: 90, life: .45, size: 1.4, g: 60 });
+          if (k >= 1) l.state = "on";
+        } else if (l.state === "on") {
+          const sh = .75 + .25 * Math.sin(now * .006 + l.a);
+          glowLine(A, B, sh, 1.4);
+          /* light traveling along the thread */
+          const t = ((now - l.t0) / 1400) % 1, q = { x: lerp(A.x, B.x, t), y: lerp(A.y, B.y, t) };
+          star(q.x, q.y, 10, GOLD, .7);
+          if (struck) { /* charged: brighter while waiting to break */
+            glowLine(A, B, 1, 2.2);
+          }
+        } else if (l.state === "break") {
+          const k = (now - l.bt) / 260;
+          if (k < 1) { glowLine(A, B, 1 - k, 2.6 * (1 - k) + .4); star(lerp(A.x, B.x, .5), lerp(A.y, B.y, .5), 60 * (1 - k), WHITE, .5 * (1 - k)); }
+        }
+      }
+      /* pulse racing along the chain during the strike */
+      if (struck && busy && links.length && !reduce) {
+        const STEP = 230, el = (now - strikeT0) / STEP - 1, seg = Math.floor(el);
+        if (seg >= 0 && seg < links.length) {
+          const l = links[seg], A = P(l.a), B = P(l.b), f = el - seg, q = { x: lerp(A.x, B.x, f), y: lerp(A.y, B.y, f) };
+          star(q.x, q.y, 34, WHITE, 1); burst(q.x, q.y, 3, { col: WHITE, speed: 120, life: .3, size: 1.2, g: 0 });
+        }
+      }
+      /* failed attempts: grow to 55%, flicker, snap */
+      fails = fails.filter(f => now - f.t0 < 900);
+      for (const f of fails) {
+        const A = P(f.a), B = P(f.b), t = now - f.t0;
+        if (t < 300) { const e = easeOut(t / 300) * .55; glowLine(A, { x: lerp(A.x, B.x, e), y: lerp(A.y, B.y, e) }, .9, 1.4); }
+        else if (t < 520) { if (Math.floor(t / 45) % 2 === 0) glowLine(A, { x: lerp(A.x, B.x, .55), y: lerp(A.y, B.y, .55) }, .5, 1); }
+      }
+      /* enemies */
+      enemies.forEach((e, i) => {
+        const p = P(i), on = e.state !== "idle";
+        const tw = .8 + .2 * Math.sin(now * .003 + i * 1.7);
+        star(p.x, p.y, on ? 34 : 20, on ? GOLD : WHITE, on ? .85 * tw : .55 * tw);
+        star(p.x, p.y, 6, on ? "255,244,214" : WHITE, 1);
+        const pk = (now - e.pulse) / 700;
+        if (pk >= 0 && pk < 1) { g.strokeStyle = `rgba(${GOLD},${(1 - pk).toFixed(3)})`; g.lineWidth = 1.5; g.beginPath(); g.arc(p.x, p.y, 10 + pk * 46, 0, TAU); g.stroke(); }
+        const fk = (now - e.flash) / 500;
+        if (fk >= 0 && fk < 1) { star(p.x, p.y, 70 * (1 - fk * .4), WHITE, .9 * (1 - fk)); g.strokeStyle = `rgba(${WHITE},${(1 - fk).toFixed(3)})`; g.lineWidth = 2; g.beginPath(); g.arc(p.x, p.y, 14 + fk * 70, 0, TAU); g.stroke(); }
+      });
+      /* particles */
+      parts = parts.filter(q => (q.life += dt) < q.max);
+      for (const q of parts) {
+        q.vy += q.g * dt; q.vx *= .985; q.x += q.vx * dt; q.y += q.vy * dt; q.rot += q.vr * dt;
+        const a = Math.max(0, 1 - q.life / q.max);
+        if (q.shard) {
+          g.save(); g.translate(q.x, q.y); g.rotate(q.rot); g.fillStyle = `rgba(${q.col},${a.toFixed(3)})`;
+          g.beginPath(); g.moveTo(-q.r, 0); g.lineTo(0, -q.r * .35); g.lineTo(q.r * .8, 0); g.lineTo(0, q.r * .35); g.closePath(); g.fill(); g.restore();
+        } else { g.fillStyle = `rgba(${q.col},${a.toFixed(3)})`; g.beginPath(); g.arc(q.x, q.y, q.r * (.4 + a * .6), 0, TAU); g.fill(); }
+      }
+      g.globalCompositeOperation = "source-over";
+      /* labels */
+      enemies.forEach((e, i) => {
+        const p = P(i); g.font = `10px "IBM Plex Mono", monospace`; g.textAlign = "center";
+        g.fillStyle = e.state !== "idle" ? `rgba(${GOLD},.95)` : "rgba(133,133,140,.9)"; g.fillText("E" + (i + 1), p.x, p.y + 30);
+      });
+      texts = texts.filter(t => now - t.t0 < 1300);
+      for (const t of texts) {
+        const k = (now - t.t0) / 1300, a = k < .15 ? k / .15 : 1 - (k - .15) / .85;
+        g.font = `${t.big ? 600 : 500} ${t.big ? 16 : 12}px "Pretendard Variable", Pretendard, "Noto Sans KR", sans-serif`; g.textAlign = "center";
+        g.fillStyle = `rgba(${t.col},${Math.max(0, a).toFixed(3)})`; g.fillText(t.text, t.x, t.y - k * 26);
+      }
+    }
+    requestAnimationFrame(draw);
     paint();
   }
 
@@ -792,7 +981,7 @@
      If the music file is missing, the old soft synth pad plays instead.
      ========================================================= */
   const btn = $("#soundBtn"), label = $("#soundLabel"), bgm = $("#bgm");
-  const VOL = 0.35;             // 배경 음악 기본 볼륨 (0 ~ 1)
+  const VOL = 0.25;             // 배경 음악 기본 볼륨 (0 ~ 1)
   let ac = null, master = null, on = false, padBuilt = false, missing = !bgm, fadeRaf = 0;
   const saveSound = v => { try { sessionStorage.setItem("astro-sound", v ? "1" : "0"); } catch (e) {} };
   function initAudio() {
@@ -826,6 +1015,21 @@
     g.gain.setValueAtTime(0, ac.currentTime); g.gain.linearRampToValueAtTime(.025, ac.currentTime + .01);
     g.gain.setValueAtTime(.025, ac.currentTime + .14); g.gain.linearRampToValueAtTime(0, ac.currentTime + .16);
     o.connect(g); g.connect(ac.destination); o.start(); o.stop(ac.currentTime + .2);
+  }
+  function thud() {          // failed check: low drop
+    if (!on || !ac) return;
+    const o = ac.createOscillator(), g = ac.createGain();
+    o.type = "sine"; o.frequency.setValueAtTime(180, ac.currentTime); o.frequency.exponentialRampToValueAtTime(48, ac.currentTime + .35);
+    g.gain.setValueAtTime(.18, ac.currentTime); g.gain.exponentialRampToValueAtTime(.0001, ac.currentTime + .4);
+    o.connect(g); g.connect(ac.destination); o.start(); o.stop(ac.currentTime + .42);
+  }
+  function crack() {         // chain link shattering: short bright noise
+    if (!on || !ac) return;
+    const len = ac.sampleRate * .09, buf = ac.createBuffer(1, len, ac.sampleRate), d = buf.getChannelData(0);
+    for (let i = 0; i < len; i++) d[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / len, 3);
+    const s = ac.createBufferSource(), f = ac.createBiquadFilter(), g = ac.createGain();
+    f.type = "highpass"; f.frequency.value = 2400; g.gain.value = .22;
+    s.buffer = buf; s.connect(f); f.connect(g); g.connect(ac.destination); s.start();
   }
   function whoosh() {
     if (!on || !ac) return;
