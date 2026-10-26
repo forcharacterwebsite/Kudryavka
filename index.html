@@ -1,0 +1,484 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>KUDRYAVKA // SAPIENTIA</title>
+<meta name="description" content="Grand Harmony Directorate 사피엔티아 입단 신청서 — 쿠드랴프카 세베랴노비치 이바노프">
+<meta property="og:title" content="KUDRYAVKA // SAPIENTIA">
+<meta property="og:description" content="우리는 별의 잔해로 태어나, 다시 별이 될 날을 기다린다. — Grand Harmony Directorate 사피엔티아 입단 신청서">
+<!-- 미리보기 그림: 사이트 주소가 정해지면 content를 전체 주소로 바꾸면 더 확실하다 (예: https://아이디.github.io/저장소/assets/og.png) -->
+<meta property="og:image" content="assets/og.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="theme-color" content="#0b0b0d">
+<link rel="icon" type="image/png" sizes="64x64" href="assets/favicon.png">
+<link rel="apple-touch-icon" href="assets/apple-touch-icon.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;1,300;1,400&family=IBM+Plex+Mono:wght@300;400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css">
+<link rel="stylesheet" href="assets/style.css">
+</head>
+<body>
+
+<canvas class="cosmos" id="cosmos" aria-hidden="true"></canvas>
+<canvas class="lines" id="lines" aria-hidden="true"></canvas>
+<div class="strain" id="strain" aria-hidden="true"></div>
+<div class="otherside" id="otherside" aria-hidden="true"></div>
+
+<!-- ============ PHOTOSENSITIVITY + AUDIO WARNING ============ -->
+<div class="gate" id="gate" role="dialog" aria-modal="true" aria-labelledby="gateTitle" aria-describedby="gateText gateSoundText">
+  <div class="gate__box">
+    <p class="gate__kicker mono">Photosensitivity &amp; audio warning</p>
+    <h2 class="gate__title" id="gateTitle">광과민성 발작 주의</h2>
+    <p class="gate__text" id="gateText">이 페이지에는 깜빡이는 빛, 화면 전체가 반전되는 효과(발현 능력 시뮬레이터)와 빠르게 움직이는 그래픽이 포함되어 있습니다. 광과민성 뇌전증이 있거나 빛과 움직임에 민감하다면 주의해 주세요. 보는 도중 어지럽거나 불편하면 바로 창을 닫아 주세요.</p>
+    <div class="gate__sound">
+      <p class="gate__sub mono">Audio &mdash; transmitting</p>
+      <p class="gate__text" id="gateSoundText">이 페이지에는 배경 음악과 효과음이 나옵니다. 들어가기 전에 기기의 소리를 줄여 주세요. 소리 없이 보고 싶다면 &lsquo;소리 끄고 보기&rsquo;를 누르세요. 들어간 뒤에도 오른쪽 위 SOUND 버튼으로 언제든 켜고 끌 수 있습니다.</p>
+    </div>
+    <p class="gate__hint mono">이 페이지 곳곳에 능력의 흔적이 숨어 있습니다. 찾아보세요.</p>
+    <div class="gate__timer mono" aria-live="polite">
+      <div class="gate__bar"><span id="gateBar"></span></div>
+      <span id="gateStatus">경고 확인 중 &hellip; 3</span>
+    </div>
+    <div class="gate__actions" id="gateActions">
+      <button class="gate__btn gate__btn--primary" id="gateEnter" type="button" disabled>소리 켜고 보기</button>
+      <button class="gate__btn" id="gateMute" type="button" disabled>소리 끄고 보기</button>
+      <button class="gate__btn gate__btn--ghost" id="gateDecline" type="button">웹사이트 보지 않기</button>
+    </div>
+    <div class="gate__alt" id="gateAlt" hidden>
+      <p class="gate__text">웹사이트 대신 같은 내용을 문서로 볼 수 있습니다.</p>
+      <a class="gate__btn gate__btn--primary" id="gateDoc" href="https://docs.google.com/document/d/1kRgtGeLVDiQf4MygJpchsPFS63CseIv4W5ij_fmYhIs/edit?usp=sharing" target="_blank" rel="noopener">구글 독스로 본문 보기 &#8599;</a>
+      <button class="gate__back mono" id="gateBack" type="button">&larr; 경고로 돌아가기</button>
+    </div>
+  </div>
+</div>
+
+<!-- 배경 음악: assets/bgm.mp3 파일을 넣으면 재생된다 (파일 이름을 바꾸려면 src만 고치면 됨) -->
+<audio id="bgm" src="assets/bgm.mp3" loop preload="auto"></audio>
+
+<!-- ============ COUNTDOWN ============ -->
+<div class="launch is-wait" id="launch" aria-hidden="true">
+  <p class="launch__top mono">GHD &middot; Sapientia &middot; Launch sequence</p>
+  <img class="launch__mark" src="assets/sapientia_symbol.png" alt="">
+  <p class="launch__t"><span>T&minus;</span><b id="launchN">3</b></p>
+  <p class="launch__msg mono" id="launchMsg">all systems nominal</p>
+  <button class="launch__skip mono" id="launchSkip" type="button">skip &rarr;</button>
+</div>
+
+<!-- ============ HEADER ============ -->
+<header class="top">
+  <a class="top__brand mono" href="#top"><img class="faction-mark" src="assets/sapientia_symbol.png" alt="" aria-hidden="true" width="20" height="20">GHD <span>&middot;</span> SAPIENTIA</a>
+  <div class="top__right mono">
+    <span class="top__sig">SIGNAL <b id="sig">&mdash;</b></span>
+    <button class="top__sound" id="soundBtn" type="button" aria-pressed="false"><span class="eq" aria-hidden="true"><i></i><i></i><i></i></span><span id="soundLabel">SOUND OFF</span></button>
+  </div>
+</header>
+
+<!-- ============ RAIL ============ -->
+<nav class="rail" aria-label="섹션">
+  <span class="rail__line"><span class="rail__fill" id="railFill"></span></span>
+  <ol>
+    <li><a href="#top" data-label="Event horizon"><i></i></a></li>
+    <li><a href="#s01" data-label="Identity"><i></i></a></li>
+    <li><a href="#s02" data-label="Appearance"><i></i></a></li>
+    <li><a href="#s03" data-label="Personality"><i></i></a></li>
+    <li><a href="#s04" data-label="L / H / S"><i></i></a></li>
+    <li><a href="#s05" data-label="Stats"><i></i></a></li>
+    <li><a href="#s06" data-label="Skills"><i></i></a></li>
+    <li><a href="#s07" data-label="Special"><i></i></a></li>
+    <li><a href="#s08" data-label="Talent"><i></i></a></li>
+    <li><a href="#s09" data-label="Traits"><i></i></a></li>
+    <li><a href="#s10" data-label="Inventory"><i></i></a></li>
+    <li><a href="#s11" data-label="Link"><i></i></a></li>
+    <li><a href="#oath" data-label="Last log"><i></i></a></li>
+  </ol>
+</nav>
+
+<main id="top">
+
+<!-- ============ HERO ============ -->
+<section class="hero stage" data-stage="0" aria-label="표지">
+  <div class="hero__screen">
+    <p class="hero__kicker mono">Grand Harmony Directorate &mdash; Sapientia &middot; Application</p>
+    <div class="hole" aria-hidden="true">
+      <canvas id="hole" aria-hidden="true"></canvas>
+      <canvas id="holeFront" class="hole__front" aria-hidden="true"></canvas>
+    </div>
+    <!-- 프로필 그림: assets 폴더에 profile.png 를 넣으면 자동으로 표시된다. 없으면 "입력 대기"가 보인다 -->
+    <figure class="portrait">
+      <div class="portrait__frame">
+        <img class="portrait__img" src="assets/profile.png" alt="쿠드랴프카 프로필 그림" width="600" height="600" onerror="this.remove()">
+        <i class="pc tl"></i><i class="pc tr"></i><i class="pc bl"></i><i class="pc br"></i>
+        <span class="portrait__empty mono">Profile image<br><span class="tbd">입력 대기</span></span>
+      </div>
+    </figure>
+    <h1 class="hero__title">Kudryavka</h1>
+    <p class="hero__ko mono">Кудрявка Северьянович Иванов</p>
+    <p class="hero__scroll mono"><span></span>Scroll</p>
+  </div>
+
+  <div class="brief">
+    <div class="brief__text">
+    <div class="brief__quote rv">
+      <p class="mono hero__bracket">[ 우리는 별의 잔해로 태어나, 다시 별이 될 날을 기다린다. ]</p>
+      <blockquote>&ldquo;잠시, 신중한 판단을 내릴 시간을 부탁드리겠습니다.&rdquo;</blockquote>
+    </div>
+    <dl class="tele mono rv">
+      <div><dt>Sex</dt><dd>남성</dd></div>
+      <div><dt>Age</dt><dd>25</dd></div>
+      <div><dt>Height / Weight</dt><dd>217 / 110</dd></div>
+      <div><dt>Faction</dt><dd>사피엔티아</dd></div>
+    </dl>
+    </div>
+    <figure class="vessel rv">
+      <figcaption class="vessel__cap mono"><span>Flight record</span><span>공식 기록 없음 &mdash; no registered flight</span></figcaption>
+      <svg class="vessel__svg" viewBox="0 0 540 236" role="img" aria-label="구체형 동체와 뒤로 뻗은 안테나 네 개를 가진 위성 설계도. 공식 비행 기록은 없다.">
+        <defs>
+          <radialGradient id="sphereShade" cx="38%" cy="32%" r="70%">
+            <stop offset="0" stop-color="#f4f4f6" stop-opacity=".55"/>
+            <stop offset=".35" stop-color="#9a9aa0" stop-opacity=".18"/>
+            <stop offset="1" stop-color="#0b0b0d" stop-opacity="0"/>
+          </radialGradient>
+        </defs>
+        <g id="vgrid" class="vs-grid"></g>
+        <g class="vs-ship">
+          <line class="vs-ant" x1="266" y1="88" x2="58" y2="26"/>
+          <line class="vs-ant" x1="258" y1="102" x2="34" y2="78"/>
+          <line class="vs-ant" x1="258" y1="118" x2="34" y2="142"/>
+          <line class="vs-ant" x1="266" y1="132" x2="58" y2="194"/>
+          <circle class="vs-mount" cx="266" cy="88" r="3"/><circle class="vs-mount" cx="258" cy="102" r="3"/>
+          <circle class="vs-mount" cx="258" cy="118" r="3"/><circle class="vs-mount" cx="266" cy="132" r="3"/>
+          <circle class="vs-sphere" cx="310" cy="110" r="50"/>
+          <circle class="vs-shade" cx="310" cy="110" r="50" fill="url(#sphereShade)"/>
+          <ellipse class="vs-seam" cx="310" cy="110" rx="50" ry="9"/>
+          <line class="vs-pl" x1="310" y1="60" x2="310" y2="160"/>
+        </g>
+        <g class="vs-call mono">
+          <polyline points="342,72 380,40 524,40"/><text x="524" y="34" text-anchor="end">A &middot; SPHERE &Oslash; 58 CM</text>
+          <polyline points="358,124 400,124 400,176 524,176"/><text x="524" y="170" text-anchor="end">C &middot; TX 20.005 / 40.002 MHZ</text>
+          <polyline points="120,62 120,214 160,214"/><text x="164" y="217">B &middot; ANTENNA &times;4 &middot; 2.4 / 2.9 M</text>
+        </g>
+        <g class="vs-dim mono"><line x1="260" y1="176" x2="360" y2="176"/><line x1="260" y1="171" x2="260" y2="181"/><line x1="360" y1="171" x2="360" y2="181"/><text x="310" y="192" text-anchor="middle">&Oslash; 58 CM</text></g>
+      </svg>
+    </figure>
+  </div>
+</section>
+
+<!-- ============ FACTION ============ -->
+<section class="sapientia" aria-label="소속 진영 사피엔티아">
+  <img class="sapientia__logo rv" src="assets/sapientia_symbol.png" alt="사피엔티아 문장. 은빛 고리 위에 펼친 파란 책과 깃펜" width="600" height="600">
+  <p class="sapientia__cap mono rv">Faction &mdash; Grand Harmony Directorate</p>
+  <p class="sapientia__name rv">Sapientia</p>
+  <p class="sapientia__ko rv">사피엔티아</p>
+</section>
+
+<!-- ============ 01 IDENTITY ============ -->
+<section class="stage" id="s01" data-stage="1">
+  <header class="stage__head rv">
+    <p class="stage__no mono">01 <span>/ 11</span></p>
+    <h2 class="stage__title">신원 정보</h2>
+    <p class="stage__en">Identity</p>
+  </header>
+  <div class="ident">
+    <div class="ident__head rv">
+      <p class="ident__name">쿠드랴프카 세베랴노비치<br>이바노프</p>
+      <p class="ident__call mono">callsign &mdash; <b>쿠드랴프카</b></p>
+      <div class="faction">
+        <img class="faction__logo" src="assets/sapientia_symbol.png" alt="사피엔티아 문장. 은빛 고리 위에 펼친 파란 책과 깃펜" width="96" height="96">
+        <div>
+          <p class="mono faction__cap">Faction</p>
+          <p class="faction__en">Sapientia</p>
+          <p class="faction__ko">사피엔티아</p>
+        </div>
+      </div>
+    </div>
+    <dl class="log mono rv">
+      <div><dt>01.1</dt><dd><span>Name</span><i>쿠드랴프카 세베랴노비치 이바노프</i></dd></div>
+      <div><dt>01.2</dt><dd><span>Sex</span><i>남성</i></dd></div>
+      <div><dt>01.3</dt><dd><span>Age</span><i>25</i></dd></div>
+      <div><dt>01.4</dt><dd><span>Height / Weight</span><i>217 cm / 110 kg</i></dd></div>
+      <div><dt>01.5</dt><dd><span>Faction</span><i>사피엔티아</i></dd></div>
+      <div><dt>01.6</dt><dd><span>Birthday</span><i>11월 3일</i></dd></div>
+      <div><dt>01.7</dt><dd><span>Blood</span><i>A형</i></dd></div>
+      <div><dt>01.8</dt><dd><span>Origin</span><i>구 러시아 연방 지역 출신 (재건 후 Concordia 대륙 거주)</i></dd></div>
+    </dl>
+    <figure class="chart chart--ident rv">
+      <figcaption class="chart__cap mono"><span>Natal sky</span><span>탄생 별자리 &mdash; 전갈자리 &middot; 11.03</span></figcaption>
+      <svg class="chart__svg" viewBox="-120 -120 240 240" role="img" aria-label="성도. 11월 3일 생, 탄생 별자리 전갈자리."><g id="chartG"></g></svg>
+    </figure>
+  </div>
+</section>
+
+<!-- ============ 02 APPEARANCE ============ -->
+<section class="stage" id="s02" data-stage="2">
+  <header class="stage__head rv">
+    <p class="stage__no mono">02 <span>/ 11</span></p>
+    <h2 class="stage__title">외관</h2>
+    <p class="stage__en">Appearance</p>
+  </header>
+  <ul class="tones mono rv" aria-label="외관 색 견본">
+    <li style="--c:#c9bfa4"><i></i><span>Hair</span><b>빛바랜 잿빛 금발 &middot; 곱슬</b></li>
+    <li style="--c:#7d6648"><i></i><span>Eyes</span><b>탁한 헤이즐넛</b></li>
+    <li style="--c:#ece7e1"><i></i><span>Skin</span><b>창백</b></li>
+    <li class="tones--scar"><i></i><span>Scars</span><b>왼눈 세로 &middot; 오른턱 대각</b></li>
+  </ul>
+  <div class="prose-group">
+    <p class="prose rv">깔끔하고 가볍게 곱슬거리는 빛바랜 <em>잿빛 금발</em>, 그 아래로 보이는 긴 속눈썹과 두껍지만 잘 정리된 눈썹, <em>탁한 헤이즐넛 색 눈동자</em>, 창백한 얼굴 위로 (그의 기준) 왼쪽 눈썹, 눈을 통과해 볼의 3분의 2까지 세로로 그어진 흉터 하나, 오른쪽 턱 아래서부터 올라오는 대각선 흉터 하나.</p>
+    <p class="prose rv">세상의 풍파에 이리저리 치인 듯 무표정하고 탁한 두 눈동자에 <em>217의 거대한 키</em>, 꼿꼿한 정자세로 서 있는 그의 모습은 마주하는 이로 하여금 그를 대하기 어렵게 만든다.</p>
+  </div>
+</section>
+
+<!-- ============ 03 PERSONALITY ============ -->
+<section class="stage" id="s03" data-stage="3">
+  <header class="stage__head rv">
+    <p class="stage__no mono">03 <span>/ 11</span></p>
+    <h2 class="stage__title">성격</h2>
+    <p class="stage__en">Personality</p>
+  </header>
+  <p class="keys rv">신중한 <b>&middot;</b> 예의바른 <b>&middot;</b> 이성적인</p>
+  <div class="panels">
+    <article class="panel rv"><p class="panel__no mono">03.1 &mdash; Prudent</p><h3 class="panel__title">신중한</h3><p class="panel__text">그는 그것이 가벼운 일이든, 중요하고 무거운 일이든 간에 상관없이 매사에 잠깐이라도 생각을 거쳐 결정을 내린다. 어떤 이들은 그의 이런 성격이 세상을 참 복잡하고 어렵게 산다라고 이야기하지만&hellip; 섣부른 판단으로 큰 손해를 보는 것보다야는.. 이게 낫지 않겠는가?</p></article>
+    <article class="panel rv"><p class="panel__no mono">03.2 &mdash; Courteous</p><h3 class="panel__title">예의바른</h3><p class="panel__text">그는 기본적으로 매우 예의바르다. 좋은 예법을 배우거나 기품 있게 행동하는 법을 아는 것은 아니지만&hellip; 적어도 상대방을 존중하고, 어리거나 친밀하다고 말을 함부로 하지 않으며, 상대방이 불편하지 않도록 작은 배려를 하는 등의 기초적인 예의가 몸에 잘 배어 있는 느낌이다.</p></article>
+    <article class="panel rv"><p class="panel__no mono">03.3 &mdash; Rational</p><h3 class="panel__title">이성적인</h3><p class="panel__text">그는 매우 이성적이다. 평소에는 작은 일에도 조금이나마 감정적인 답변을 내놓기도 하고, 공감을 하는 능력이 꽤 괜찮아 그리 잘 드러나지 않는 듯하나.. 진지하고 진중한 상황에 처한다면 감성을 모두 제외하고 어쩌면 잔인할지도 모를 결론과 선택을 망설임 없이 내릴 정도로 말이다.</p><p class="panel__text panel__text--dim">그래도&hellip; 괜찮을 것이다. 그는 차갑고 예리하지만 누군가를 크게 해치는 방향은 최대한 가지 않으려 하니까.</p></article>
+  </div>
+</section>
+
+<!-- ============ 04 LHS ============ -->
+<section class="stage" id="s04" data-stage="4">
+  <header class="stage__head rv">
+    <p class="stage__no mono">04 <span>/ 11</span></p>
+    <h2 class="stage__title">L / H / S</h2>
+    <p class="stage__en">Like &middot; Hate &middot; Scare</p>
+  </header>
+  <div class="lhs">
+    <div class="lhs__col rv"><p class="lhs__big">L</p><p class="mono lhs__cap">Like</p><ul><li>에그타르트</li><li>자신에게 주어진 일에 착실히 임하는 것</li><li>혼자만의 시간</li><li>책</li><li>들꽃</li><li>우주</li><li>별</li><li>강아지</li></ul></div>
+    <div class="lhs__col rv"><p class="lhs__big">H</p><p class="mono lhs__cap">Hate</p><ul><li>책임감 없는 행동</li><li>거짓말</li><li>규칙을 지키지 못하는 것</li><li>더위</li><li>스킨십</li></ul></div>
+    <div class="lhs__col lhs__col--q rv"><p class="lhs__big">S</p><p class="mono lhs__cap">Scare</p><ul><li class="lhs__q">?</li></ul></div>
+  </div>
+</section>
+
+<!-- ============ 05 STATS ============ -->
+<section class="stage" id="s05" data-stage="5">
+  <header class="stage__head rv">
+    <p class="stage__no mono">05 <span>/ 11</span></p>
+    <h2 class="stage__title">능력치</h2>
+    <p class="stage__en">Telemetry</p>
+  </header>
+  <div class="hp rv" role="img" aria-label="체력 200">
+    <p class="mono hp__idx">05.0 &mdash; HP</p>
+    <p class="hp__name">체력</p>
+    <p class="hp__num">200</p>
+  </div>
+  <div class="stats rv">
+    <svg class="radar" viewBox="-140 -140 280 280" role="img" aria-label="능력치 오각 그래프: 공격력 85, 방어력 40, 민첩성 90, 정확성 80, 정신력 25"><g id="radarG"></g></svg>
+    <div>
+    <ul class="gauges mono" id="gauges">
+      <li data-v="85"><span>공격력</span><b>85</b><span class="gauge"><i></i></span></li>
+      <li data-v="40"><span>방어력</span><b>40</b><span class="gauge"><i></i></span></li>
+      <li data-v="90"><span>민첩성</span><b>90</b><span class="gauge"><i></i></span></li>
+      <li data-v="80"><span>정확성</span><b>80</b><span class="gauge"><i></i></span></li>
+      <li data-v="25"><span>정신력</span><b>25</b><span class="gauge"><i></i></span></li>
+    </ul>
+    <p class="stats__wait mono">// HP 200 &middot; ATK 85 &middot; DEF 40 &middot; AGI 90 &middot; ACC 80 &middot; MND 25</p>
+    </div>
+  </div>
+</section>
+
+<!-- ============ 06 SKILLS ============ -->
+<section class="stage" id="s06" data-stage="6">
+  <header class="stage__head rv">
+    <p class="stage__no mono">06 <span>/ 11</span></p>
+    <h2 class="stage__title">기술</h2>
+    <p class="stage__en">Maneuvers</p>
+  </header>
+  <div class="skills">
+    <details class="skill rv" open><summary><span class="skill__no mono">06.1 &middot; DEF</span><span class="skill__name">위성 도약</span><span class="skill__tags mono"><em>특수</em><em>#역습</em></span><span class="skill__toggle" aria-hidden="true"></span></summary><p>상대의 공격이 닿기 직전, 공간을 뒤틀어 미끄러지듯 빠져나간 후, 적의 빗나간 공격으로 인해 발생한 사각지대를 역으로 날카로운 역습을 꽂아 넣는다.</p></details>
+    <details class="skill rv"><summary><span class="skill__no mono">06.2 &middot; ATK</span><span class="skill__name">대기 압축</span><span class="skill__tags mono"><em>참격</em><em>#치명</em></span><span class="skill__toggle" aria-hidden="true"></span></summary><p>적과 나 사이의 공간을 순식간에 접어 거리를 좁힌 뒤, 압축된 공간이 도로 팽창하는 반발력을 이용하여 묵직하게 가격 후, 제자리로 순간이동한다.</p></details>
+    <details class="skill rv"><summary><span class="skill__no mono">06.3 &middot; ATK</span><span class="skill__name">특이점 강타</span><span class="skill__tags mono"><em>특수</em><em>#처형</em></span><span class="skill__toggle" aria-hidden="true"></span></summary><p>공간을 비틀어 상대방의 급소 근처로 순간이동하여 공간의 뒤틀림을 그대로 상대의 급소에 방출한다.</p><p class="skill__cond mono">조건 &mdash; 상대방의 급소를 알 때만 사용 가능</p></details>
+    <details class="skill rv"><summary><span class="skill__no mono">06.4 &middot; ATK</span><span class="skill__name">빅뱅</span><span class="skill__tags mono"><em>특수</em><em>#필중</em></span><span class="skill__toggle" aria-hidden="true"></span></summary><p>찰나의 순간 공간을 접어 적의 사각지대로 단숨에 전이한 뒤, 응축된 충격을 맹렬하게 꽂아 넣는다.</p><p class="skill__cond mono">조건 &mdash; 대상의 현재 HP가 75% 이상일 때만 [필중] 키워드가 활성화되며, 대상의 HP가 75% 미만일 경우 일반 명중 판정으로 처리된다.</p></details>
+  </div>
+</section>
+
+<!-- ============ 07 SPECIAL ============ -->
+<section class="stage" id="s07" data-stage="7">
+  <header class="stage__head rv">
+    <p class="stage__no mono">07 <span>/ 11</span></p>
+    <h2 class="stage__title">특수능력</h2>
+    <p class="stage__en">Special</p>
+  </header>
+  <p class="alert mono rv"><i></i>Special &mdash; 최대 7명 연결 &middot; 연결마다 정신력 판정</p>
+  <h3 class="special__title rv">별들의 사슬</h3>
+  <p class="prose rv">적들을 별자리처럼 보이지 않는 빛의 사슬로 연결한다. 한 번 엮인 별자리는 고통과 충격을 고스란히 공유하며, 연결이 길어질수록 사용자의 정신력을 극도로 요하게 된다.</p>
+
+  <div class="chainwrap">
+    <ol class="rules rv">
+      <li><p class="mono">07.1 &mdash; Link</p><p>최초 대상 1명을 지정한 후, 별자리처럼 최대 7명의 적까지 차례대로 사슬을 연결한다.</p></li>
+      <li><p class="mono">07.2 &mdash; Check</p><p>대상을 1명 추가로 연결할 때마다 정신력 판정을 실시하며, 실패하기 전까지 연결된 모든 대상에게 사슬이 유지된다.</p><p class="rules__sub">(7번째 대상까지 판정 성공 시 계속 연결, 판정 실패 시 그 직전까지 연결된 적들에게만 사슬 적용)</p></li>
+      <li><p class="mono">07.3 &mdash; Shatter</p><p>사슬이 연결된 상태에서 쿠드랴프카가 다음 턴에 가하는 공격이 적중할 경우, 사슬이 연쇄작용을 일으키며 부서지고, 사슬로 이어진 모든 적이 동일한 최종 피해량을 함께 받는다.</p></li>
+    </ol>
+
+    <div class="chain rv" id="chain">
+      <div class="chain__map">
+        <svg id="chainSvg" viewBox="0 0 400 300" role="img" aria-label="적이 별처럼 흩어진 지도. 적을 눌러 사슬을 연결하세요.">
+          <g id="chainLinks"></g><g id="chainStars"></g>
+        </svg>
+        <p class="chain__hint mono" id="chainHint">최초 대상을 고르세요</p>
+      </div>
+      <dl class="chain__hud mono">
+        <div><dt>Linked</dt><dd><b id="cN">0</b> / 7</dd></div>
+        <div><dt>Last check</dt><dd><b id="cCheck">&mdash;</b></dd></div>
+        <div><dt>Status</dt><dd><b id="cStatus">READY</b></dd></div>
+      </dl>
+      <div class="chain__ctrl mono">
+        <button type="button" id="cStrike" disabled>다음 턴 공격 적중 &rarr; 연쇄</button>
+        <button type="button" id="cReset">초기화</button>
+      </div>
+      <p class="chain__note mono">// 판정 성공률은 시연용 임의값입니다 (두 번째 대상 90%, 이후 한 명마다 10%p씩 낮아짐). 실제 판정은 정신력 판정을 따릅니다.</p>
+    </div>
+  </div>
+</section>
+
+<!-- ============ 08 TALENT ============ -->
+<section class="stage stage--talent" id="s08" data-stage="8">
+  <header class="stage__head rv">
+    <p class="stage__no mono">08 <span>/ 11</span></p>
+    <h2 class="stage__title">발현 능력</h2>
+    <p class="stage__en">Talent</p>
+  </header>
+
+  <div class="talent">
+    <div class="talent__text">
+      <h3 class="talent__name rv">별들의 저편에서</h3>
+      <p class="talent__summary rv">하루 최대 10회, 최대 100m. 두 지점 사이의 공간을 접어 한순간에 이동한다. 익숙하지 않은 장소에서는 오차, 과용 시 트라우마 기반 환각과 어지럼증.</p>
+      <dl class="spec mono rv">
+        <div><dt>Uses / day</dt><dd>최대 10회</dd></div>
+        <div><dt>Range</dt><dd>최대 100m <small>축구장 한 개 거리</small></dd></div>
+        <div><dt>Scope</dt><dd>이 행성 &middot; 차원 &middot; 우주의 두 지점</dd></div>
+        <div><dt>Return</dt><dd>5초 이내 이전 지점 복귀 <small>횟수 차감 없음</small></dd></div>
+      </dl>
+      <p class="prose rv">지금 이 행성, 차원, 우주의 두 지점 사이의 공간을 접어 먼 거리를 한순간에 텔레포트하듯 이동한다.</p>
+      <p class="prose prose--sm rv">단, 이동할 장소를 정확하게 인식해야 하며, 익숙하지 않은 장소에서는 간혹 오차가 발생할 수 있고, 과도하게 사용할 경우 사용자의 트라우마에 기반한 일시적인 이면 세계에 대한 환각, 극심한 어지럼증을 일으킬 수 있다.</p>
+
+      <ol class="phases rv">
+        <li><p class="mono">Uses 1&ndash;10 &middot; Stable</p><p>안정적으로 사용이 가능하나, 횟수가 늘어날수록 점점 더 환각과 통증의 농도가 세진다.</p></li>
+        <li class="phases--red"><p class="mono">Uses 11+ &middot; Critical</p><p>전투 불능이 될 수도 있을 정도로 커다란 정신적 타격이 발현된다. 사용자가 자신만의 세계에 갇혀 혼잣말을 반복하거나, 자신이나 주변인들을 해치는 극단적인 행동을 보일 수도 있다.</p></li>
+        <li><p class="mono">Return &le; 5s &middot; Free</p><p>5초 이내 능력을 재사용해 바로 이전 지점으로 복귀 시 사용 횟수는 차감되지 않는다.</p></li>
+      </ol>
+    </div>
+
+    <div class="fold rv" id="fold">
+      <div class="fold__map">
+        <canvas id="foldCanvas" aria-label="별 지도. 지점을 눌러 이동할 위치를 고르세요." role="img"></canvas>
+        <p class="fold__hint mono" id="foldHint">별 지도에서 이동할 지점을 누르세요</p>
+      </div>
+      <dl class="fold__hud mono">
+        <div><dt>Uses</dt><dd><b id="fUses">0</b> / 10</dd></div>
+        <div><dt>Distance</dt><dd><b id="fDist">&mdash;</b></dd></div>
+        <div><dt>Drift</dt><dd><b id="fDrift">&mdash;</b></dd></div>
+        <div><dt>Status</dt><dd><b id="fStatus">STABLE</b></dd></div>
+      </dl>
+      <div class="fold__meter" aria-hidden="true"><i id="fMeter"></i><span class="fold__limit"></span></div>
+      <div class="fold__ctrl mono">
+        <button type="button" id="fBack" disabled>이전 지점으로 복귀 <span id="fBackT"></span></button>
+        <button type="button" id="fReset">하루 경과 &middot; 리셋</button>
+      </div>
+      <p class="fold__note mono">밝은 구역은 익숙한 장소, 어두운 구역은 처음 보는 장소입니다. 100m를 넘는 지점은 접을 수 없습니다. 이동 후 5초 안에 복귀하면 횟수가 줄지 않습니다.</p>
+    </div>
+  </div>
+</section>
+
+<!-- ============ 09 TRAITS ============ -->
+<section class="stage" id="s09" data-stage="9">
+  <header class="stage__head rv">
+    <p class="stage__no mono">09 <span>/ 11</span></p>
+    <h2 class="stage__title">특징</h2>
+    <p class="stage__en">Traits</p>
+  </header>
+  <div class="traits">
+    <article class="trait trait--wide rv"><p class="panel__no mono">09.1 &mdash; Former post</p><p class="trait__quote">&ldquo;전직 우주비행사&hellip;&rdquo; 라고는 하나.</p><p>공식적으로 그의 이름이 적힌 우주 비행 기록은 없다. 오히려 여러 자잘한 직업들을 전전한 듯, 자잘한 잔재주가 많다. 예를 들어 색종이를 예쁘게 자를 수 있다는 꽤나 감성적인 것부터 옷핀 하나로 문을 따는 등의 어딘가 수상한 재주 등등.. 하지만 어째선지.. 우주와 별에 관한 정보에 박식하고 자신이 우주비행사가 되었던 과정에 대해 서술하는 내용이 일관된 것을 보면&hellip; 마냥 허풍은 아닌 듯하다.</p></article>
+    <article class="trait rv"><p class="panel__no mono">09.2 &mdash; Birthday</p><p class="trait__lead">11월 3일</p><p>하지만 챙겨주는 이가 잘 없어 본인도 평소엔 잊고 지내는 듯하다.</p></article>
+    <article class="trait rv"><p class="panel__no mono">09.3 &mdash; Doodle</p><p>최근 들어 노트의 여백에 작은 낙서를 끄적이는 행동을 자주 보인다. 실력이 좋지 않아 무슨 그림인지는 알아보기 어려우나&hellip; 별, 우주와 관련된 그림들이 대부분인 듯.</p></article>
+    <article class="trait rv"><p class="panel__no mono">09.4 &mdash; Manner</p><p>나이, 성별, 직책에 상관없이 모두에게 사무적인 존대를 사용하며 예의를 지킨다. 설령 상대방이 자신에게 무례하게 행동한다 해도 말이다.</p></article>
+    <article class="trait rv"><p class="panel__no mono">09.5 &mdash; Small talk</p><p>평소 표정 변화도 적고, 무얼 하든 무던..무감각한 표정인지라 어려워 보이나 의외로 한 번 말이 붙으면 간단한 스몰토크도 무리 없이 하는 등 의외로 말주변이 괜찮은 편이다. 물론.. 말투는 사무적이지만.</p></article>
+    <article class="trait rv"><p class="panel__no mono">09.6 &mdash; Touch</p><p>어째선지 갑작스러운 스킨십을 극도로 피한다.</p></article>
+    <article class="trait rv"><p class="panel__no mono">09.7 &mdash; Egg tart</p><p>평소 단것이나 간식류를 그리 즐기진 않는 듯하나.. 단 하나, 에그타르트만큼은 크게 선호하는 듯하다. 말도 안 되는 부탁을 하고 대가로 에그타르트를 내밀면 결국 거절하더라도 잠시 고민할 정도로.</p></article>
+    <article class="trait rv"><p class="panel__no mono">09.8 &mdash; Care</p><p>무뚝뚝해 보여도 의외로 남을 잘 챙긴다. 물론 &ldquo;자신의 사람&rdquo;이라고 결정 난 사람에 한해서지만&hellip; 한 번 마음에 들이면 골머리를 앓더라도 쉽게 포기하지 않는다.</p></article>
+    <article class="trait trait--wide rv"><p class="panel__no mono">09.9 &mdash; Discipline</p><p>자기관리에 매우 철저한 편이다. 항상 옷을 단정하게 입으며 일찍 일어나 곱슬거리는 머리를 말끔히 정리한다.</p></article>
+  </div>
+</section>
+
+<!-- ============ 10 INVENTORY ============ -->
+<section class="stage" id="s10" data-stage="10">
+  <header class="stage__head rv">
+    <p class="stage__no mono">10 <span>/ 11</span></p>
+    <h2 class="stage__title">소지품</h2>
+    <p class="stage__en">Cargo</p>
+  </header>
+  <div class="payload payload--3">
+    <div class="payload__item rv"><p class="panel__no mono">10.1</p><p class="payload__name">슈레이드 월든 넘버 148</p><p class="payload__sub mono">사냥용 단검</p></div>
+    <div class="payload__item rv"><p class="panel__no mono">10.2</p><p class="payload__name">입가심 사탕 여러 개</p><p class="payload__sub mono">candy &times; n</p></div>
+    <div class="payload__item rv"><p class="panel__no mono">10.3</p><p class="payload__name">거의 다 쓴 수첩</p><p class="payload__sub mono">notebook &middot; few pages left</p></div>
+  </div>
+</section>
+
+<!-- ============ 11 LINK ============ -->
+<section class="stage" id="s11" data-stage="11">
+  <header class="stage__head rv">
+    <p class="stage__no mono">11 <span>/ 11</span></p>
+    <h2 class="stage__title">선관</h2>
+    <p class="stage__en">Link</p>
+  </header>
+  <div class="link">
+    <div class="link__who payload__item rv">
+      <p class="panel__no mono">11.1 &mdash; Linked subject &middot; 친관</p>
+      <ul class="rel">
+        <!-- ============ 선관 링크: 이 부분을 수정해주세요 ============
+             아래 href="#" 의 # 를 선관 캐릭터 사이트 주소로 바꾸면,
+             이름을 눌렀을 때 그 사이트가 새 탭으로 열립니다.
+             예) href="https://계정이름.github.io/저장소이름/"
+             # 그대로 두면 눌러도 아무 일도 일어나지 않습니다.
+             ============================================================ -->
+        <li><a class="rel__link" href="#" target="_blank" rel="noopener">드미트리 드미트리예비치 쇼스타코비치</a></li>
+        <!-- ============ 선관 링크 수정 끝 ============ -->
+      </ul>
+      <p class="link__quote">&ldquo;드미트리, 그래도 점호는 참석하는 것이 바람직하지 않겠습니까?&rdquo;</p>
+      <dl class="link__meta mono">
+        <div><dt>11.2 &mdash; 지향 커플링</dt><dd>ALL &lt;&lt;&lt; CL</dd></div>
+        <div><dt>11.3 &mdash; Note</dt><dd>갠밴은 열린문~~~~~</dd></div>
+      </dl>
+    </div>
+    <div class="link__body payload__item rv">
+      <p class="panel__no mono">11.4 &mdash; Relation log</p>
+      <p class="link__desc">1년 전쯤 각자 다른 일을 하다 우연히 만나 인연을 트게 된 사이. 흥미주의인 드미트리와 원칙주의인 쿠드랴프카는 어찌 보면 겹치지 않는 평행선처럼 너무나도 달라 잘 맞지 않을 듯하나&hellip; 의외로 남을 잘 챙기는 쿠드랴프카와 흥미만 끈다면 본격적인 드미트리의 성격이 얼추 들어맞아, 쿠드랴프카는 귀찮다며 움직이지 않는 드미트리를 들고 점호에 참석하고, 드미트리는 쿠드랴프카가 부족한 부분들을 도와주는 등 가까이 지내고 있다고 한다.</p>
+    </div>
+  </div>
+</section>
+
+<!-- ============ OATH ============ -->
+<section class="oath stage" id="oath" data-stage="12" aria-label="입단 각오">
+  <p class="oath__label mono"><i></i>Last log &mdash; 입단 각오</p>
+  <p class="oath__text">[ 실망 시켜드리는 일이 없도록 임하겠습니다. ]</p>
+  <p class="oath__remark">&ldquo;잘 부탁드립니다! 거북이지만 열심히 달려보겠습니다!&rdquo;</p>
+</section>
+
+<!-- ============ END ============ -->
+<footer class="end">
+  <p class="end__eot mono">End of log</p>
+  <a class="end__link" href="https://docs.google.com/document/d/1kRgtGeLVDiQf4MygJpchsPFS63CseIv4W5ij_fmYhIs/edit?usp=sharing" target="_blank" rel="noopener" id="docLink">
+    <span class="end__big">Read full<br>document <span class="end__arrow" aria-hidden="true">&#8599;</span></span>
+    <span class="end__sub">본문 전체 보기 &mdash; Google Docs</span>
+  </a>
+  <div class="end__meta mono">
+    <span class="end__faction"><img src="assets/sapientia_symbol.png" alt="" aria-hidden="true" width="20" height="20">Grand Harmony Directorate &middot; Sapientia 사피엔티아</span>
+    <a href="#top">Back to horizon &uarr;</a>
+  </div>
+</footer>
+
+</main>
+
+<script src="assets/main.js"></script>
+</body>
+</html>
