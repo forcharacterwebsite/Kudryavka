@@ -311,13 +311,13 @@
     <h2 class="stage__title">특수능력</h2>
     <p class="stage__en">Special</p>
   </header>
-  <p class="alert mono rv"><i></i>Special &mdash; 속성: 특수 &middot; 사슬 최대 6번 &middot; 중복 연결 가능 &middot; 연결마다 정신력 판정</p>
+  <p class="alert mono rv"><i></i>Special &mdash; 속성: 특수 &middot; 최대 7명 연결 &middot; 연결마다 정신력 판정 &middot; 사슬당 공격력 &times;0.7 특수피해</p>
   <h3 class="special__title rv">별들의 사슬</h3>
   <p class="prose rv">적들을 별자리처럼 보이지 않는 빛의 사슬로 연결한다. 한 번 엮인 별자리는 고통과 충격을 고스란히 공유하며, 연결이 길어질수록 사용자의 정신력을 극도로 요하게 된다.</p>
 
   <div class="chain rv" id="chain">
     <dl class="chain__hud mono">
-      <div><dt>Links</dt><dd><b id="cN">0</b> / 6</dd></div>
+      <div><dt>Chains</dt><dd><b id="cN">0</b> / 7</dd></div>
       <div><dt>Next check</dt><dd><b id="cNext">&mdash;</b></dd></div>
       <div><dt>Last check</dt><dd><b id="cCheck">&mdash;</b></dd></div>
       <div><dt>Status</dt><dd><b id="cStatus">READY</b></dd></div>
@@ -330,7 +330,7 @@
       <p class="chain__banner" id="chainBanner" aria-live="polite"></p>
     </div>
     <div class="chain__bar">
-      <p class="chain__note mono">// 사슬은 최대 6번(7번째 대상까지) 이을 수 있고, 이미 이은 적도 다시 이을 수 있습니다 (바로 직전 대상만 제외). 공격이 적중하면 적마다 이어진 횟수만큼 최종 피해를 받습니다. 판정 성공률은 시연용 임의값입니다 (두 번째 연결 90%, 이후 한 번마다 10%p씩 낮아짐). 실제 판정은 정신력 판정을 따릅니다.</p>
+      <p class="chain__note mono">// 최초 대상을 포함해 최대 7번째까지 연결할 수 있고, 적이 적으면 같은 적을 다시 연결할 수 있습니다 (연달아는 불가). 피해 배율은 연결 순서로 정해집니다. 판정 성공률은 시연용 임의값입니다 (두 번째 연결 90%, 이후 한 번마다 10%p씩 낮아짐). 실제 판정은 정신력 판정을 따릅니다.</p>
       <div class="chain__ctrl mono">
         <button type="button" id="cStrike" class="chain__strike" disabled>다음 턴 공격 적중 &rarr; 연쇄</button>
         <button type="button" id="cReset">초기화</button>
@@ -339,9 +339,11 @@
   </div>
 
   <ol class="rules rules--row">
-    <li class="rv"><p class="mono">07.1 &mdash; Link</p><p>최초 대상 1명을 지정한 후, 별자리처럼 사슬을 최대 6번 이어 최대 7번째 대상까지 차례대로 연결한다. 이미 연결된 적에게도 다시 사슬을 이을 수 있다.</p><p class="rules__sub">(단, 바로 직전에 연결한 대상에게는 이을 수 없다.)</p></li>
-    <li class="rv"><p class="mono">07.2 &mdash; Check</p><p>대상을 1명 추가로 연결할 때마다 정신력 판정을 실시하며, 실패하기 전까지 연결된 모든 대상에게 사슬이 유지된다.</p><p class="rules__sub">(7번째 대상까지 판정 성공 시 계속 연결, 판정 실패 시 그 직전까지 연결된 적들에게만 사슬 적용)</p></li>
-    <li class="rv"><p class="mono">07.3 &mdash; Shatter</p><p>사슬이 연결된 상태에서 쿠드랴프카가 다음 턴에 가하는 공격이 적중할 경우, 사슬이 연쇄작용을 일으키며 부서지고, 사슬로 이어진 모든 적이 동일한 최종 피해량을 함께 받는다. 같은 적에게 사슬이 여러 번 이어졌다면, 그 적은 이어진 횟수만큼 최종 피해를 받는다.</p><p class="rules__sub">(예: 1 &rarr; 2 &rarr; 1 &rarr; 2 &rarr; 1 &rarr; 2 &rarr; 1 순서로 연결 시, 1번 적은 최종 피해 4회, 2번 적은 3회)</p></li>
+    <li class="rv"><p class="mono">07.1 &mdash; Link</p><p>최초 대상 1인을 지정해 사슬을 연결하여 최대 7명의 적까지 사슬을 연결할 수 있다. 만약 적이 그보다 적다면 한 명에게 여러 번 연결이 가능하다.</p><p class="rules__sub">(단, 같은 적을 연달아 연결할 수는 없다.)</p></li>
+    <li class="rv"><p class="mono">07.2 &mdash; Check</p><p>추가로 연결할 때마다 정신력 판정을 실시하며, 연결은 판정에 실패할 때까지 계속된다.</p></li>
+    <li class="rv"><p class="mono">07.3 &mdash; Damage</p><p>사슬은 하나당 공격력의 &times;0.7의 특수피해를 입힌다. 연결된 순서에 따라 아래의 특수피해를 적용한다.</p>
+      <dl class="tiers mono"><div><dt>1~3번째 적</dt><dd>&times;0.7</dd></div><div><dt>4~5번째 적</dt><dd>&times;0.5</dd></div><div><dt>6~7번째 적</dt><dd>&times;0.35</dd></div></dl></li>
+    <li class="rv"><p class="mono">07.4 &mdash; Shatter</p><p>다음 턴에 사용자의 공격이 적중했을 경우, 사슬이 연쇄작용을 일으켜 부서지고 사슬로 이어진 모든 적이 데미지를 입는다. 공격은 최초 대상(1번째 적)에게 들어가므로, 1번째 적은 공격과 사슬 피해를 함께 받는다.</p></li>
   </ol>
 </section>
 
