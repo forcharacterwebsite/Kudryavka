@@ -7,8 +7,9 @@
 <meta name="description" content="Grand Harmony Directorate 사피엔티아 입단 신청서 — 쿠드랴프카 세베랴노비치 이바노프">
 <meta property="og:title" content="KUDRYAVKA // SAPIENTIA">
 <meta property="og:description" content="우리는 별의 잔해로 태어나, 다시 별이 될 날을 기다린다. — Grand Harmony Directorate 사피엔티아 입단 신청서">
-<!-- 미리보기 그림: 사이트 주소가 정해지면 content를 전체 주소로 바꾸면 더 확실하다 (예: https://아이디.github.io/저장소/assets/og.png) -->
-<meta property="og:image" content="assets/og.png">
+<!-- 공유 미리보기 그림 (1200×630). 그림만 바꿀 때는 assets/og.png 파일을 같은 이름으로 덮어쓰면 된다 -->
+<meta property="og:url" content="https://forcharacterwebsite.github.io/Kudryavka/">
+<meta property="og:image" content="https://forcharacterwebsite.github.io/Kudryavka/assets/og.png">
 <meta property="og:image:width" content="1200">
 <meta property="og:image:height" content="630">
 <meta name="twitter:card" content="summary_large_image">
@@ -221,10 +222,10 @@
     <p class="stage__en">Appearance</p>
   </header>
   <ul class="tones mono rv" aria-label="외관 색 견본">
-    <li style="--c:#c9bfa4"><i></i><span>Hair</span><b>빛바랜 잿빛 금발 &middot; 곱슬</b></li>
-    <li style="--c:#7d6648"><i></i><span>Eyes</span><b>탁한 헤이즐넛</b></li>
-    <li style="--c:#ece7e1"><i></i><span>Skin</span><b>창백</b></li>
-    <li class="tones--scar"><i></i><span>Scars</span><b>왼눈 세로 &middot; 오른턱 대각</b></li>
+    <li style="--c:#b1a99c"><i></i><span>Hair</span><b>빛바랜 잿빛 금발 &middot; 곱슬</b></li>
+    <li style="--c:#615d56"><i></i><span>Eyes</span><b>탁한 헤이즐넛</b></li>
+    <li style="--c:#dfdddb"><i></i><span>Skin</span><b>창백</b></li>
+    <li style="--c:#877c76"><i></i><span>Scars</span><b>왼눈 세로 &middot; 오른턱 대각</b></li>
   </ul>
   <div class="prose-group">
     <p class="prose rv">깔끔하고 가볍게 곱슬거리는 빛바랜 <em>잿빛 금발</em>, 그 아래로 보이는 긴 속눈썹과 두껍지만 잘 정리된 눈썹, <em>탁한 헤이즐넛 색 눈동자</em>, 창백한 얼굴 위로 (그의 기준) 왼쪽 눈썹, 눈을 통과해 볼의 3분의 2까지 세로로 그어진 흉터 하나, 오른쪽 턱 아래서부터 올라오는 대각선 흉터 하나.</p>
@@ -310,13 +311,13 @@
     <h2 class="stage__title">특수능력</h2>
     <p class="stage__en">Special</p>
   </header>
-  <p class="alert mono rv"><i></i>Special &mdash; 최대 7명 연결 &middot; 연결마다 정신력 판정</p>
+  <p class="alert mono rv"><i></i>Special &mdash; 속성: 특수 &middot; 사슬 최대 6번 &middot; 중복 연결 가능 &middot; 연결마다 정신력 판정</p>
   <h3 class="special__title rv">별들의 사슬</h3>
   <p class="prose rv">적들을 별자리처럼 보이지 않는 빛의 사슬로 연결한다. 한 번 엮인 별자리는 고통과 충격을 고스란히 공유하며, 연결이 길어질수록 사용자의 정신력을 극도로 요하게 된다.</p>
 
   <div class="chain rv" id="chain">
     <dl class="chain__hud mono">
-      <div><dt>Linked</dt><dd><b id="cN">0</b> / 7</dd></div>
+      <div><dt>Links</dt><dd><b id="cN">0</b> / 6</dd></div>
       <div><dt>Next check</dt><dd><b id="cNext">&mdash;</b></dd></div>
       <div><dt>Last check</dt><dd><b id="cCheck">&mdash;</b></dd></div>
       <div><dt>Status</dt><dd><b id="cStatus">READY</b></dd></div>
@@ -329,7 +330,7 @@
       <p class="chain__banner" id="chainBanner" aria-live="polite"></p>
     </div>
     <div class="chain__bar">
-      <p class="chain__note mono">// 판정 성공률은 시연용 임의값입니다 (두 번째 대상 90%, 이후 한 명마다 10%p씩 낮아짐). 실제 판정은 정신력 판정을 따릅니다.</p>
+      <p class="chain__note mono">// 사슬은 최대 6번(7번째 대상까지) 이을 수 있고, 이미 이은 적도 다시 이을 수 있습니다 (바로 직전 대상만 제외). 공격이 적중하면 적마다 이어진 횟수만큼 최종 피해를 받습니다. 판정 성공률은 시연용 임의값입니다 (두 번째 연결 90%, 이후 한 번마다 10%p씩 낮아짐). 실제 판정은 정신력 판정을 따릅니다.</p>
       <div class="chain__ctrl mono">
         <button type="button" id="cStrike" class="chain__strike" disabled>다음 턴 공격 적중 &rarr; 연쇄</button>
         <button type="button" id="cReset">초기화</button>
@@ -338,9 +339,9 @@
   </div>
 
   <ol class="rules rules--row">
-    <li class="rv"><p class="mono">07.1 &mdash; Link</p><p>최초 대상 1명을 지정한 후, 별자리처럼 최대 7명의 적까지 차례대로 사슬을 연결한다.</p></li>
+    <li class="rv"><p class="mono">07.1 &mdash; Link</p><p>최초 대상 1명을 지정한 후, 별자리처럼 사슬을 최대 6번 이어 최대 7번째 대상까지 차례대로 연결한다. 이미 연결된 적에게도 다시 사슬을 이을 수 있다.</p><p class="rules__sub">(단, 바로 직전에 연결한 대상에게는 이을 수 없다.)</p></li>
     <li class="rv"><p class="mono">07.2 &mdash; Check</p><p>대상을 1명 추가로 연결할 때마다 정신력 판정을 실시하며, 실패하기 전까지 연결된 모든 대상에게 사슬이 유지된다.</p><p class="rules__sub">(7번째 대상까지 판정 성공 시 계속 연결, 판정 실패 시 그 직전까지 연결된 적들에게만 사슬 적용)</p></li>
-    <li class="rv"><p class="mono">07.3 &mdash; Shatter</p><p>사슬이 연결된 상태에서 쿠드랴프카가 다음 턴에 가하는 공격이 적중할 경우, 사슬이 연쇄작용을 일으키며 부서지고, 사슬로 이어진 모든 적이 동일한 최종 피해량을 함께 받는다.</p></li>
+    <li class="rv"><p class="mono">07.3 &mdash; Shatter</p><p>사슬이 연결된 상태에서 쿠드랴프카가 다음 턴에 가하는 공격이 적중할 경우, 사슬이 연쇄작용을 일으키며 부서지고, 사슬로 이어진 모든 적이 동일한 최종 피해량을 함께 받는다. 같은 적에게 사슬이 여러 번 이어졌다면, 그 적은 이어진 횟수만큼 최종 피해를 받는다.</p><p class="rules__sub">(예: 1 &rarr; 2 &rarr; 1 &rarr; 2 &rarr; 1 &rarr; 2 &rarr; 1 순서로 연결 시, 1번 적은 최종 피해 4회, 2번 적은 3회)</p></li>
   </ol>
 </section>
 
