@@ -789,7 +789,11 @@
       }
     }
     const say = (x, y, text, col, big) => texts.push({ x, y, text, col: col || GOLD, t0: performance.now(), big: !!big });
-    let finalHits = null;   // after the shatter: { enemyIndex: times hit } shown under each star until reset
+    let finalHits = null;   // after the shatter: { enemyIndex: { n: chains, dmg: total } } shown under each star until reset
+    /* 피해 규칙: 사슬 하나당 공격력 ×0.7 특수피해. 연결 순서로 1~3번째 적 ×0.7, 4~5번째 적 ×0.5, 6~7번째 적 ×0.35
+       같은 적이 여러 번 연결되면 그 순번들의 피해를 모두 받는다. 같은 적을 연달아 연결할 수는 없다 */
+    const mult = pos => pos <= 3 ? .7 : pos <= 5 ? .5 : .35;   // pos: 1-based order in the chain
+    const fmt = v => (Math.round(v * 100) / 100).toString();
     function shake(hard) {
       if (reduce) return;
       chain.classList.remove("is-shake"); void chain.offsetWidth; chain.classList.add("is-shake");
@@ -799,11 +803,11 @@
     const chanceFor = n => Math.max(.1, .9 - .1 * (n - 1));   // n = how many are already linked
 
     function paint() {
-      nEl.textContent = Math.max(0, linked.length - 1);
+      nEl.textContent = linked.length;
       const canLink = !locked && !struck && linked.length > 0 && linked.length < 7;
       nextEl.textContent = !linked.length ? "최초 · 판정 없음" : canLink ? Math.round(chanceFor(linked.length) * 100) + "%" : "—";
       loadEl.style.width = (Math.max(0, linked.length - 1) / 6 * 100) + "%";
-      strikeBtn.disabled = struck || busy || linked.length < 2;
+      strikeBtn.disabled = struck || busy || linked.length < 1;   // 1번째 적만 연결돼도 공격 가능
       resetBtnC.disabled = busy;
       const lastI = linked[linked.length - 1];
       btns.forEach((b, i) => { b.disabled = struck || locked || (linked.length > 0 && i === lastI); });
@@ -813,14 +817,14 @@
     function pick(i) {
       if (busy) return;
       if (struck) { chHint.textContent = "사슬이 이미 부서졌습니다 — 초기화를 누르세요"; return; }
-      if (locked) { chHint.textContent = linked.length >= 7 ? "사슬을 최대 6번까지 이었습니다" : "판정 실패 — 더 이상 연결할 수 없습니다"; return; }
-      if (linked.length && i === linked[linked.length - 1]) { chHint.textContent = "바로 직전 대상과는 이을 수 없습니다 — 다른 적을 고르세요"; return; }
+      if (locked) { chHint.textContent = linked.length >= 7 ? "최대 7명까지 연결했습니다" : "판정 실패 — 더 이상 연결할 수 없습니다"; return; }
+      if (linked.length && i === linked[linked.length - 1]) { chHint.textContent = "같은 적을 연달아 연결할 수 없습니다 — 다른 적을 고르세요"; return; }
       const now = performance.now(), p = P(i);
       if (!linked.length) {
         linked.push(i); enemies[i].state = "linked"; enemies[i].pulse = now;
-        burst(p.x, p.y, 26, { speed: 140 }); say(p.x, p.y - 30, "TARGET");
+        burst(p.x, p.y, 26, { speed: 140 }); say(p.x, p.y - 30, "1번째 · ×0.7");
         chkEl.textContent = "—"; chkEl.className = ""; stEl.textContent = "LINKING";
-        chHint.textContent = "최초 대상 지정 — 다음 적을 눌러 사슬을 뻗으세요"; chime(0); paint(); return;
+        chHint.textContent = "최초 대상 지정 — 다음 적을 눌러 사슬을 뻗거나, 바로 공격하세요"; chime(0); paint(); return;
       }
       const chance = chanceFor(linked.length), prev = linked[linked.length - 1], ok = Math.random() < chance;
       busy = true; paint();
@@ -833,11 +837,11 @@
           const q = P(i), t = performance.now();
           linked.push(i); enemies[i].state = "linked"; enemies[i].pulse = t;
           const again = linked.slice(0, -1).includes(i);
-          burst(q.x, q.y, again ? 48 : 34, { speed: again ? 230 : 190 }); say(q.x, q.y - 30, again ? "LINK " + linked.length + " · 중복" : "LINK " + linked.length);
+          burst(q.x, q.y, again ? 48 : 34, { speed: again ? 230 : 190 }); say(q.x, q.y - 30, linked.length + "번째 · ×" + mult(linked.length));
           chime(linked.length); busy = false;
           const uniq = new Set(linked).size;
-          if (linked.length >= 7) { locked = true; stEl.textContent = "MAX 6"; chHint.textContent = "사슬 6번 완료 (적 " + uniq + "명) — 다음 턴 공격으로 연쇄시키세요"; }
-          else { stEl.textContent = "LINKING"; chHint.textContent = "사슬 " + (linked.length - 1) + "번 · 적 " + uniq + "명 — 계속 잇거나 공격하세요 (중복 연결 가능)"; }
+          if (linked.length >= 7) { locked = true; stEl.textContent = "MAX 7"; chHint.textContent = "7번째까지 연결 완료 (적 " + uniq + "명) — 다음 턴 공격으로 연쇄시키세요"; }
+          else { stEl.textContent = "LINKING"; chHint.textContent = linked.length + "번째까지 연결 · 적 " + uniq + "명 — 계속 잇거나 공격하세요 (다음 연결 ×" + mult(linked.length + 1) + ")"; }
           paint();
         }, reduce ? 0 : 360);
       } else {
@@ -849,7 +853,7 @@
           enemies[i].flash = performance.now() - 200; burst(B.x, B.y, 14, { col: "160,160,168", speed: 90, life: .6 });
           shake(true); thud();
           locked = true; busy = false; stEl.textContent = "HOLD " + linked.length;
-          chHint.textContent = "판정 실패 — 직전까지 연결된 사슬(" + (linked.length - 1) + "번 · 적 " + new Set(linked).size + "명)만 유지";
+          chHint.textContent = "판정 실패 — 직전 " + linked.length + "번째까지 (적 " + new Set(linked).size + "명)만 사슬 유지";
           paint();
         }, reduce ? 0 : 520);
       }
@@ -868,7 +872,7 @@
       const STEP = reduce ? 0 : 230;
       const first = P(linked[0]);
       burst(first.x, first.y, 50, { col: WHITE, speed: 320, life: .6 }); shake(false); whoosh();
-      enemies[linked[0]].flash = performance.now(); say(first.x, first.y - 54, "HIT", WHITE, true);
+      enemies[linked[0]].flash = performance.now(); say(first.x, first.y - 54, "HIT +×1", WHITE, true);   // 공격은 항상 1번째 적에게: 공격력 ×1
       links.forEach(l => { l.state = "on"; });
       const run = {};
       linked.forEach((idx, k) => setTimeout(() => {
@@ -878,18 +882,21 @@
           shardsCurve(l, GOLD, 34); crack();
         }
         run[idx] = (run[idx] || 0) + 1;
+        const m = mult(k + 1);
         enemies[idx].flash = t; enemies[idx].state = "hit";
         burst(p.x, p.y, 30 + run[idx] * 12, { speed: 220 + run[idx] * 40, life: .9 }); chime(k + 1);
-        say(p.x, p.y - 34, "피해 ×" + run[idx], run[idx] > 1 ? WHITE : GOLD, run[idx] > 1);
+        say(p.x, p.y - 34, "+×" + m, run[idx] > 1 ? WHITE : GOLD, run[idx] > 1);
       }, STEP * (k + 1)));
       setTimeout(() => {
         const t = performance.now();
         [...new Set(linked)].forEach(idx => { enemies[idx].pulse = t; const p = P(idx); burst(p.x, p.y, 14, { speed: 120, life: .5 }); });
         const uniq = new Set(linked).size;
-        finalHits = {}; linked.forEach(i => { finalHits[i] = (finalHits[i] || 0) + 1; });
-        setBanner("최종 피해 총 " + linked.length + "회<small>적 " + uniq + "명 · 이어진 횟수만큼 동일 피해</small>");
+        finalHits = {}; let total = 0;
+        linked.forEach((i, k) => { const h = finalHits[i] = finalHits[i] || { n: 0, dmg: 0, hit: 0 }; h.n++; h.dmg += mult(k + 1); total += mult(k + 1); });
+        finalHits[linked[0]].hit = 1; finalHits[linked[0]].dmg += 1; total += 1;   // 1번째 적은 공격 자체(×1)도 맞는다 → 최소 ×1.7
+        setBanner("총 피해 공격력 ×" + fmt(total) + "<small>공격 ×1 + 사슬 특수피해 ×" + fmt(total - 1) + " · " + linked.length + "번째까지 연결 · 적 " + uniq + "명</small>");
         stEl.textContent = "DONE";
-        chHint.textContent = Object.keys(finalHits).map(i => "E" + (+i + 1) + " ×" + finalHits[i]).join(" · ") + " — 초기화로 다시 해 보세요";
+        chHint.textContent = Object.keys(finalHits).map(i => "E" + (+i + 1) + " ×" + fmt(finalHits[i].dmg)).join(" · ") + " — 초기화로 다시 해 보세요";
         busy = false; paint();
       }, STEP * (linked.length + 1) + 240);
     });
@@ -902,10 +909,16 @@
     /* ---------- drawing ---------- */
     /* each link is a quadratic curve; repeated pairs bend to alternate sides so they never overlap */
     function cvOf(l) {
+      if (l.loop != null) {   // same target twice in a row: a ring that leaves the star and comes back, each repeat a bit bigger and turned
+        const S = P(l.a), ang = -Math.PI / 2 + l.loop * 1.1, R = 18 + l.loop * 7;
+        return { loop: true, S, R, cx: S.x + Math.cos(ang) * R, cy: S.y + Math.sin(ang) * R, a0: ang + Math.PI };
+      }
       const A = P(l.a), B = P(l.b), dx = B.x - A.x, dy = B.y - A.y, b = l.bend || 0;
       return { A, B, C: { x: (A.x + B.x) / 2 - dy * b, y: (A.y + B.y) / 2 + dx * b } };
     }
-    const qp = (c, t) => ({ x: (1 - t) * (1 - t) * c.A.x + 2 * (1 - t) * t * c.C.x + t * t * c.B.x, y: (1 - t) * (1 - t) * c.A.y + 2 * (1 - t) * t * c.C.y + t * t * c.B.y });
+    const qp = (c, t) => c.loop
+      ? { x: c.cx + Math.cos(c.a0 + t * TAU) * c.R, y: c.cy + Math.sin(c.a0 + t * TAU) * c.R }
+      : { x: (1 - t) * (1 - t) * c.A.x + 2 * (1 - t) * t * c.C.x + t * t * c.B.x, y: (1 - t) * (1 - t) * c.A.y + 2 * (1 - t) * t * c.C.y + t * t * c.B.y };
     function glowCurve(c, upto, alpha, width) {
       const n = 28, pts = [];
       for (let k = 0; k <= n; k++) pts.push(qp(c, upto * k / n));
@@ -1013,7 +1026,8 @@
       if (finalHits) for (const i in finalHits) {
         const p = P(+i); g.textAlign = "center";
         g.font = `600 13px "Pretendard Variable", Pretendard, "Noto Sans KR", sans-serif`;
-        g.fillStyle = `rgba(${GOLD},.95)`; g.fillText("동일 피해 ×" + finalHits[i], p.x, p.y - 30);
+        g.fillStyle = `rgba(${GOLD},.95)`; g.fillText("공격력 ×" + fmt(finalHits[i].dmg), p.x, p.y - 44);
+        g.font = `500 10px "IBM Plex Mono", monospace`; g.fillStyle = "rgba(180,180,186,.9)"; g.fillText((finalHits[i].hit ? "공격 + " : "") + "사슬 " + finalHits[i].n + "회", p.x, p.y - 30);
       }
       texts = texts.filter(t => now - t.t0 < 1300);
       for (const t of texts) {

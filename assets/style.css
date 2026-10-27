@@ -524,10 +524,14 @@ body.is-quake main{animation:shakeSoft .42s cubic-bezier(.36,.07,.19,.97)}
 @keyframes shakeHard{10%,90%{transform:translate(-2px,1px)}20%,80%{transform:translate(5px,-2px)}30%,50%,70%{transform:translate(-9px,3px)}40%,60%{transform:translate(9px,-3px)}}
 @keyframes shakeSoft{10%,90%{transform:translate(-1px,0)}20%,80%{transform:translate(2px,0)}30%,50%,70%{transform:translate(-3px,1px)}40%,60%{transform:translate(3px,-1px)}}
 .rules{display:grid;gap:12px}
-.rules--row{grid-template-columns:repeat(3,minmax(0,1fr));margin-top:clamp(28px,5vh,48px)}
+.rules--row{grid-template-columns:repeat(2,minmax(0,1fr));margin-top:clamp(28px,5vh,48px)}
 .rules li{padding:18px 20px;border-top:1px solid var(--line-2);background:var(--panel)}
 .rules .mono{color:var(--mid);margin-bottom:8px}
 .rules li p:not(.mono){color:#cfcfd3;font-size:15px}
+.tiers{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));margin-top:14px;border-top:1px solid var(--line-2)}
+.tiers div{padding:10px 0;border-bottom:1px solid var(--line)}
+.tiers dt{color:var(--mid);font-size:10px}
+.tiers dd{color:var(--s-gold);font-size:16px;margin-top:4px;text-transform:none}
 .rules__sub{color:var(--mid) !important;font-size:13.5px !important;margin-top:8px}
 
 /* ---------- 12 coupling ---------- */
