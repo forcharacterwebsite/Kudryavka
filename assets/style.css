@@ -444,7 +444,7 @@ body.is-gated main,body.is-gated .top,body.is-gated .rail,body.is-gated .hud{opa
 .ident__name{font-family:var(--f-kr);font-weight:600;font-size:clamp(30px,4.4vw,60px);letter-spacing:-.05em;line-height:1.15}
 .ident__call b{color:var(--fg);font-weight:500}
 .log dd i{font-style:normal}
-.tones--scar i{background:linear-gradient(160deg,transparent 46%,#efe9e3 47%,#efe9e3 49%,transparent 50%),linear-gradient(60deg,transparent 58%,#efe9e3 59%,#efe9e3 60.5%,transparent 61.5%),#d9d2ca}
+.tones--scar i{background:linear-gradient(100deg,transparent 46%,#877c76 47%,#877c76 49.5%,transparent 50.5%),linear-gradient(40deg,transparent 58%,#877c76 59%,#877c76 60.5%,transparent 61.5%),#dfdddb}
 .tones b{text-transform:none;letter-spacing:0;font-family:var(--f-kr);font-size:13px}
 .prose-group{display:grid;gap:18px}
 .prose em{font-style:normal;color:var(--fg);border-bottom:1px solid var(--line-2)}

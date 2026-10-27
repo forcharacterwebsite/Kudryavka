@@ -169,7 +169,7 @@
     W = cv.width = innerWidth * DPR; H = cv.height = innerHeight * DPR;
     buildNebula(); buildField(); sizeLines(); sizeHole();
   }
-  let t = 0;
+  let t = 0, shipK = 1, foldVisible = true;
   function drawCosmos() {
     cx.globalCompositeOperation = "source-over"; cx.globalAlpha = 1;
     cx.fillStyle = "#0b0b0d"; cx.fillRect(0, 0, W, H);
@@ -210,7 +210,7 @@
       ship = { x: dir > 0 ? -80 * DPR : W + 80 * DPR, y: H * (.12 + Math.random() * .7), vx: dir * (.3 + Math.random() * .3) * DPR, vy: (Math.random() - .5) * .08 * DPR, k: (4 + Math.random() * 3) * DPR, dir, rot: Math.random() * TAU };
     }
     if (!ship) return;
-    ship.x += ship.vx; ship.y += ship.vy; ship.rot += .002;
+    ship.x += ship.vx * shipK; ship.y += ship.vy * shipK; ship.rot += .002 * shipK;   // shipK: elapsed time in 60fps frames
     const { x, y, k, dir } = ship;
     cx.save(); cx.translate(x, y); cx.scale(dir, 1); cx.rotate(Math.sin(ship.rot) * .12);
     /* antennas trail behind the direction of travel */
@@ -373,11 +373,21 @@
      ========================================================= */
   let last = performance.now(), holeVisible = true;
   new IntersectionObserver(es => { holeVisible = es[0].isIntersecting; }).observe(hc);
+  /* 핸드폰 부담 줄이기:
+     - 별하늘 배경과 별자리 선은 핸드폰에서 스크롤 중 1초 30번, 멈춰 있을 때 1초 15번만 다시 그린다 (컴퓨터는 그대로 60번)
+     - 08 발현 능력 별 지도는 화면에 보일 때만 그린다 */
+  const MOBILE = matchMedia("(pointer: coarse)").matches || small();
+  let lastBg = 0, lastScrollT = 0;
+  addEventListener("scroll", () => { lastScrollT = performance.now(); }, { passive: true });
   function frame(now) {
     const dt = Math.min(64, now - last); last = now; t = now;
-    drawCosmos(); drawLines();
+    const gap = !MOBILE ? 0 : (now - lastScrollT < 300 ? 33 : 66);
+    if (now - lastBg >= gap - 2) {
+      shipK = lastBg ? Math.min(4, (now - lastBg) / 16.7) : 1; lastBg = now;
+      drawCosmos(); drawLines();
+    }
     if (holeVisible) drawHole(dt);
-    drawFold(now);
+    if (foldVisible) drawFold(now);
     if (!reduce) requestAnimationFrame(frame);
   }
   resize(); addEventListener("resize", resize);
@@ -559,6 +569,7 @@
   let pos = { x: .5, y: .5 }, uses = 0, anim = null, trail = [], FS = 0;
   function sizeFold() { const b = fc.getBoundingClientRect(); FS = fc.width = fc.height = Math.max(10, Math.round(b.width * DPR)); }
   new ResizeObserver(sizeFold).observe(fc); sizeFold();
+  new IntersectionObserver(es => { foldVisible = es[0].isIntersecting; }).observe(fc);
   const familiar = (x, y) => ZONES.some(z => Math.hypot(x - z.x, y - z.y) < z.r);
 
   function drawFold(now) {
@@ -731,8 +742,9 @@
     const chHint = $("#chainHint"), banner = $("#chainBanner");
     const strikeBtn = $("#cStrike"), resetBtnC = $("#cReset");
     const GOLD = "246,207,124", WHITE = "245,245,247";
-    const POS_WIDE = [[.10,.28],[.24,.14],[.35,.38],[.49,.18],[.62,.42],[.76,.16],[.89,.33],[.17,.68],[.40,.74],[.64,.76],[.85,.70]];
-    const POS_TALL = [[.18,.12],[.52,.08],[.84,.16],[.32,.28],[.72,.33],[.14,.45],[.50,.48],[.86,.53],[.26,.65],[.62,.70],[.84,.78]];
+    /* 적은 최대 5명. 사슬은 최대 7회, 같은 적을 다시 이을 수 있다(바로 직전 대상만 제외) */
+    const POS_WIDE = [[.14,.34],[.36,.18],[.60,.40],[.85,.22],[.46,.72]];
+    const POS_TALL = [[.22,.16],[.76,.14],[.50,.40],[.20,.66],[.78,.68]];
     let W = 0, H = 0, CDPR = 1, POS = POS_WIDE;
     const enemies = POS_WIDE.map((_, i) => ({ i, state: "idle", flash: -1e9, pulse: -1e9 }));
     let linked = [], links = [], fails = [], parts = [], texts = [], locked = false, struck = false, busy = false, strikeT0 = 0;
@@ -777,6 +789,7 @@
       }
     }
     const say = (x, y, text, col, big) => texts.push({ x, y, text, col: col || GOLD, t0: performance.now(), big: !!big });
+    let finalHits = null;   // after the shatter: { enemyIndex: times hit } shown under each star until reset
     function shake(hard) {
       if (reduce) return;
       chain.classList.remove("is-shake"); void chain.offsetWidth; chain.classList.add("is-shake");
@@ -786,21 +799,22 @@
     const chanceFor = n => Math.max(.1, .9 - .1 * (n - 1));   // n = how many are already linked
 
     function paint() {
-      nEl.textContent = linked.length;
+      nEl.textContent = Math.max(0, linked.length - 1);
       const canLink = !locked && !struck && linked.length > 0 && linked.length < 7;
       nextEl.textContent = !linked.length ? "최초 · 판정 없음" : canLink ? Math.round(chanceFor(linked.length) * 100) + "%" : "—";
-      loadEl.style.width = (linked.length / 7 * 100) + "%";
+      loadEl.style.width = (Math.max(0, linked.length - 1) / 6 * 100) + "%";
       strikeBtn.disabled = struck || busy || linked.length < 2;
       resetBtnC.disabled = busy;
-      btns.forEach((b, i) => { b.disabled = struck || locked || linked.includes(i); });
+      const lastI = linked[linked.length - 1];
+      btns.forEach((b, i) => { b.disabled = struck || locked || (linked.length > 0 && i === lastI); });
     }
     function setBanner(html) { banner.innerHTML = html || ""; banner.classList.toggle("is-on", !!html); }
 
     function pick(i) {
       if (busy) return;
       if (struck) { chHint.textContent = "사슬이 이미 부서졌습니다 — 초기화를 누르세요"; return; }
-      if (locked) { chHint.textContent = linked.length >= 7 ? "최대 7명까지 연결했습니다" : "판정 실패 — 더 이상 연결할 수 없습니다"; return; }
-      if (linked.includes(i)) return;
+      if (locked) { chHint.textContent = linked.length >= 7 ? "사슬을 최대 6번까지 이었습니다" : "판정 실패 — 더 이상 연결할 수 없습니다"; return; }
+      if (linked.length && i === linked[linked.length - 1]) { chHint.textContent = "바로 직전 대상과는 이을 수 없습니다 — 다른 적을 고르세요"; return; }
       const now = performance.now(), p = P(i);
       if (!linked.length) {
         linked.push(i); enemies[i].state = "linked"; enemies[i].pulse = now;
@@ -811,16 +825,19 @@
       const chance = chanceFor(linked.length), prev = linked[linked.length - 1], ok = Math.random() < chance;
       busy = true; paint();
       if (ok) {
-        links.push({ a: prev, b: i, t0: now, dur: reduce ? 1 : 360, state: "grow" });
+        const same = links.filter(l => (l.a === prev && l.b === i) || (l.a === i && l.b === prev)).length;
+        links.push({ a: prev, b: i, t0: now, dur: reduce ? 1 : 360, state: "grow", bend: same ? (same % 2 ? 1 : -1) * Math.ceil(same / 2) * .28 : 0 });
         chkEl.textContent = "성공 · " + Math.round(chance * 100) + "%"; chkEl.className = "is-good";
         whoosh();
         setTimeout(() => {
           const q = P(i), t = performance.now();
           linked.push(i); enemies[i].state = "linked"; enemies[i].pulse = t;
-          burst(q.x, q.y, 34, { speed: 190 }); say(q.x, q.y - 30, "LINK " + linked.length);
+          const again = linked.slice(0, -1).includes(i);
+          burst(q.x, q.y, again ? 48 : 34, { speed: again ? 230 : 190 }); say(q.x, q.y - 30, again ? "LINK " + linked.length + " · 중복" : "LINK " + linked.length);
           chime(linked.length); busy = false;
-          if (linked.length >= 7) { locked = true; stEl.textContent = "MAX 7"; chHint.textContent = "7명 연결 완료 — 다음 턴 공격으로 연쇄시키세요"; }
-          else { stEl.textContent = "LINKING"; chHint.textContent = linked.length + "명 연결 — 계속 잇거나 공격하세요"; }
+          const uniq = new Set(linked).size;
+          if (linked.length >= 7) { locked = true; stEl.textContent = "MAX 6"; chHint.textContent = "사슬 6번 완료 (적 " + uniq + "명) — 다음 턴 공격으로 연쇄시키세요"; }
+          else { stEl.textContent = "LINKING"; chHint.textContent = "사슬 " + (linked.length - 1) + "번 · 적 " + uniq + "명 — 계속 잇거나 공격하세요 (중복 연결 가능)"; }
           paint();
         }, reduce ? 0 : 360);
       } else {
@@ -832,7 +849,7 @@
           enemies[i].flash = performance.now() - 200; burst(B.x, B.y, 14, { col: "160,160,168", speed: 90, life: .6 });
           shake(true); thud();
           locked = true; busy = false; stEl.textContent = "HOLD " + linked.length;
-          chHint.textContent = "판정 실패 — 직전까지 연결된 " + linked.length + "명에게만 사슬 유지";
+          chHint.textContent = "판정 실패 — 직전까지 연결된 사슬(" + (linked.length - 1) + "번 · 적 " + new Set(linked).size + "명)만 유지";
           paint();
         }, reduce ? 0 : 520);
       }
@@ -853,31 +870,60 @@
       burst(first.x, first.y, 50, { col: WHITE, speed: 320, life: .6 }); shake(false); whoosh();
       enemies[linked[0]].flash = performance.now(); say(first.x, first.y - 54, "HIT", WHITE, true);
       links.forEach(l => { l.state = "on"; });
+      const run = {};
       linked.forEach((idx, k) => setTimeout(() => {
         const t = performance.now(), p = P(idx);
         if (k > 0) {
           const l = links[k - 1]; l.state = "break"; l.bt = t;
-          shards(P(l.a), P(l.b), GOLD, 34); crack();
+          shardsCurve(l, GOLD, 34); crack();
         }
+        run[idx] = (run[idx] || 0) + 1;
         enemies[idx].flash = t; enemies[idx].state = "hit";
-        burst(p.x, p.y, 40, { speed: 260, life: .9 }); chime(k + 1);
-        say(p.x, p.y - 30, "동일 피해", GOLD, false);
+        burst(p.x, p.y, 30 + run[idx] * 12, { speed: 220 + run[idx] * 40, life: .9 }); chime(k + 1);
+        say(p.x, p.y - 34, "피해 ×" + run[idx], run[idx] > 1 ? WHITE : GOLD, run[idx] > 1);
       }, STEP * (k + 1)));
       setTimeout(() => {
         const t = performance.now();
-        linked.forEach(idx => { enemies[idx].pulse = t; const p = P(idx); burst(p.x, p.y, 14, { speed: 120, life: .5 }); });
-        setBanner("&times;" + linked.length + " 동일 최종 피해<small>chain shattered</small>");
-        stEl.textContent = "DONE"; chHint.textContent = linked.length + "명 모두 같은 최종 피해를 받았습니다 — 초기화로 다시 해 보세요";
+        [...new Set(linked)].forEach(idx => { enemies[idx].pulse = t; const p = P(idx); burst(p.x, p.y, 14, { speed: 120, life: .5 }); });
+        const uniq = new Set(linked).size;
+        finalHits = {}; linked.forEach(i => { finalHits[i] = (finalHits[i] || 0) + 1; });
+        setBanner("최종 피해 총 " + linked.length + "회<small>적 " + uniq + "명 · 이어진 횟수만큼 동일 피해</small>");
+        stEl.textContent = "DONE";
+        chHint.textContent = Object.keys(finalHits).map(i => "E" + (+i + 1) + " ×" + finalHits[i]).join(" · ") + " — 초기화로 다시 해 보세요";
         busy = false; paint();
       }, STEP * (linked.length + 1) + 240);
     });
     resetBtnC.addEventListener("click", () => {
-      linked = []; links = []; fails = []; parts = []; texts = []; locked = false; struck = false; busy = false;
+      linked = []; links = []; fails = []; parts = []; texts = []; locked = false; struck = false; busy = false; finalHits = null;
       enemies.forEach(e => { e.state = "idle"; e.flash = e.pulse = -1e9; });
       chkEl.textContent = "—"; chkEl.className = ""; stEl.textContent = "READY"; chHint.textContent = "최초 대상을 고르세요"; setBanner(""); paint();
     });
 
     /* ---------- drawing ---------- */
+    /* each link is a quadratic curve; repeated pairs bend to alternate sides so they never overlap */
+    function cvOf(l) {
+      const A = P(l.a), B = P(l.b), dx = B.x - A.x, dy = B.y - A.y, b = l.bend || 0;
+      return { A, B, C: { x: (A.x + B.x) / 2 - dy * b, y: (A.y + B.y) / 2 + dx * b } };
+    }
+    const qp = (c, t) => ({ x: (1 - t) * (1 - t) * c.A.x + 2 * (1 - t) * t * c.C.x + t * t * c.B.x, y: (1 - t) * (1 - t) * c.A.y + 2 * (1 - t) * t * c.C.y + t * t * c.B.y });
+    function glowCurve(c, upto, alpha, width) {
+      const n = 28, pts = [];
+      for (let k = 0; k <= n; k++) pts.push(qp(c, upto * k / n));
+      [[7, .18, GOLD], [3, .45, GOLD], [1, 1, "255,248,226"]].forEach(([wm, am, col]) => {
+        g.lineCap = "round"; g.lineJoin = "round"; g.strokeStyle = `rgba(${col},${(alpha * am).toFixed(3)})`; g.lineWidth = width * wm;
+        g.beginPath(); pts.forEach((q, k) => k ? g.lineTo(q.x, q.y) : g.moveTo(q.x, q.y)); g.stroke();
+      });
+    }
+    function shardsCurve(l, col, n) {
+      const c = cvOf(l);
+      if (reduce) n = Math.min(n, 5);
+      for (let k = 0; k < n; k++) {
+        const t = Math.random(), q = qp(c, t), q2 = qp(c, Math.min(1, t + .01));
+        const tx = q2.x - q.x, ty = q2.y - q.y, len = Math.hypot(tx, ty) || 1, side = Math.random() < .5 ? -1 : 1, sp = 60 + Math.random() * 160;
+        parts.push({ x: q.x, y: q.y, vx: -ty / len * sp * side + (Math.random() - .5) * 60, vy: tx / len * sp * side - 40 - Math.random() * 80,
+          life: 0, max: .9 + Math.random() * .7, r: 2 + Math.random() * 4, col, g: 420, shard: true, rot: Math.random() * TAU, vr: (Math.random() - .5) * 18 });
+      }
+    }
     function glowLine(a, b, alpha, width) {
       g.lineCap = "round";
       g.strokeStyle = `rgba(${GOLD},${(alpha * .18).toFixed(3)})`; g.lineWidth = width * 7; g.beginPath(); g.moveTo(a.x, a.y); g.lineTo(b.x, b.y); g.stroke();
@@ -902,32 +948,30 @@
       g.globalCompositeOperation = "lighter";
       /* links */
       for (const l of links) {
-        const A = P(l.a), B = P(l.b);
+        const c = cvOf(l);
         if (l.state === "grow") {
-          const k = Math.min(1, (now - l.t0) / l.dur), e = easeOut(k), tip = { x: lerp(A.x, B.x, e), y: lerp(A.y, B.y, e) };
-          glowLine(A, tip, 1, 1.6);
+          const k = Math.min(1, (now - l.t0) / l.dur), e = easeOut(k), tip = qp(c, e);
+          glowCurve(c, e, 1, 1.6);
           star(tip.x, tip.y, 26, GOLD, .9);
           if (!reduce && Math.random() < .9) burst(tip.x, tip.y, 2, { speed: 90, life: .45, size: 1.4, g: 60 });
           if (k >= 1) l.state = "on";
         } else if (l.state === "on") {
           const sh = .75 + .25 * Math.sin(now * .006 + l.a);
-          glowLine(A, B, sh, 1.4);
+          glowCurve(c, 1, sh, 1.4);
           /* light traveling along the thread */
-          const t = ((now - l.t0) / 1400) % 1, q = { x: lerp(A.x, B.x, t), y: lerp(A.y, B.y, t) };
+          const q = qp(c, ((now - l.t0) / 1400) % 1);
           star(q.x, q.y, 10, GOLD, .7);
-          if (struck) { /* charged: brighter while waiting to break */
-            glowLine(A, B, 1, 2.2);
-          }
+          if (struck) glowCurve(c, 1, 1, 2.2);   /* charged: brighter while waiting to break */
         } else if (l.state === "break") {
           const k = (now - l.bt) / 260;
-          if (k < 1) { glowLine(A, B, 1 - k, 2.6 * (1 - k) + .4); star(lerp(A.x, B.x, .5), lerp(A.y, B.y, .5), 60 * (1 - k), WHITE, .5 * (1 - k)); }
+          if (k < 1) { glowCurve(c, 1, 1 - k, 2.6 * (1 - k) + .4); const m = qp(c, .5); star(m.x, m.y, 60 * (1 - k), WHITE, .5 * (1 - k)); }
         }
       }
       /* pulse racing along the chain during the strike */
       if (struck && busy && links.length && !reduce) {
         const STEP = 230, el = (now - strikeT0) / STEP - 1, seg = Math.floor(el);
         if (seg >= 0 && seg < links.length) {
-          const l = links[seg], A = P(l.a), B = P(l.b), f = el - seg, q = { x: lerp(A.x, B.x, f), y: lerp(A.y, B.y, f) };
+          const q = qp(cvOf(links[seg]), el - seg);
           star(q.x, q.y, 34, WHITE, 1); burst(q.x, q.y, 3, { col: WHITE, speed: 120, life: .3, size: 1.2, g: 0 });
         }
       }
@@ -965,6 +1009,12 @@
         const p = P(i); g.font = `10px "IBM Plex Mono", monospace`; g.textAlign = "center";
         g.fillStyle = e.state !== "idle" ? `rgba(${GOLD},.95)` : "rgba(133,133,140,.9)"; g.fillText("E" + (i + 1), p.x, p.y + 30);
       });
+      /* after the shatter: how many times each enemy takes the final damage */
+      if (finalHits) for (const i in finalHits) {
+        const p = P(+i); g.textAlign = "center";
+        g.font = `600 13px "Pretendard Variable", Pretendard, "Noto Sans KR", sans-serif`;
+        g.fillStyle = `rgba(${GOLD},.95)`; g.fillText("동일 피해 ×" + finalHits[i], p.x, p.y - 30);
+      }
       texts = texts.filter(t => now - t.t0 < 1300);
       for (const t of texts) {
         const k = (now - t.t0) / 1300, a = k < .15 ? k / .15 : 1 - (k - .15) / .85;
